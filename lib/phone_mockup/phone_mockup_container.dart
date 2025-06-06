@@ -12,10 +12,9 @@ import 'app_info_screen.dart';
 import 'clear_data_screen.dart';
 import 'custom_clear_data_dialog.dart'; // Ensured this import is clean
 import 'clickable_outline.dart'; // Required for GlobalKey<ClickableOutlineState>
-import 'connection_sharing_screen.dart'; // Import the new screen
 
 // Enum to manage the current view being displayed in the phone mockup
-enum CurrentScreenView { appGrid, settings, appInfo, clearData, connectionSharing } // Added connectionSharing
+enum CurrentScreenView { appGrid, settings, appInfo, clearData }
 
 class PhoneMockupContainer extends StatefulWidget {
   final GlobalKey<AppGridState> appGridKey; // Key for the AppGrid it will contain
@@ -75,15 +74,21 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   final GlobalKey<ClickableOutlineState> _clearDataDialogCancelKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _clearDataDialogConfirmKey = GlobalKey();
 
-  // --- Settings Screen Keys ---
-  // Add a key for the "Connection & sharing" ListTile
-  final GlobalKey<ClickableOutlineState> _settingsConnectionSharingKey = GlobalKey();
-
-
   void dismissDialog() {
     setState(() {
       _activeDialog = null;
       _isBlurred = false;
+    });
+  }
+
+  void showSettingsScreen() {
+    print("PhoneMockupContainerState: showSettingsScreen() called.");
+    setState(() {
+      _currentScreenView = CurrentScreenView.settings;
+      print("PhoneMockupContainerState: _currentScreenView set to $_currentScreenView.");
+      _currentAppDetails = null;
+      _updateCurrentScreenWidget();
+      print("PhoneMockupContainerState: _updateCurrentScreenWidget() called from showSettingsScreen.");
     });
   }
 
@@ -113,6 +118,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         );
         break;
       case CurrentScreenView.settings:
+        print("PhoneMockupContainerState: _updateCurrentScreenWidget() is updating for SettingsScreen.");
         _currentAppScreenWidget = SettingsScreen(
           onBack: () {
             setState(() {
@@ -122,6 +128,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             });
           },
         );
+        print("PhoneMockupContainerState: _currentAppScreenWidget is now SettingsScreen.");
         break;
       case CurrentScreenView.appInfo:
         if (_currentAppDetails != null) {
@@ -187,16 +194,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           _updateCurrentScreenWidget();
         }
         break;
-      case CurrentScreenView.connectionSharing: // New case for ConnectionSharingScreen
-        _currentAppScreenWidget = ConnectionSharingScreen(
-          onBack: () {
-            setState(() {
-              _currentScreenView = CurrentScreenView.settings;
-              _updateCurrentScreenWidget();
-            });
-          },
-        );
-        break;
     }
   }
 
@@ -227,13 +224,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           _currentScreenView = CurrentScreenView.appGrid;
           _updateCurrentScreenWidget();
         });
-      } else if (_currentScreenView == CurrentScreenView.connectionSharing) { // Handle back from Connection & sharing
-        setState(() {
-          _currentScreenView = CurrentScreenView.settings;
-          _updateCurrentScreenWidget();
-        });
-      }
-      else {
+      } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Already on main screen or no back action defined')),
@@ -253,10 +244,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           );
         }
       }
-    } else if (cmd == 'click connection & sharing') { // New command to click "Connection & sharing"
-      await triggerSettingsConnectionSharingAction();
-    }
-    else {
+    } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Unknown command: $command')),
@@ -329,7 +317,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       }
       setState(() {
         _currentScreenView = CurrentScreenView.appInfo;
-        _updateCurrentScreenWidget();
+        _updateCurrentScreenWidget(); 
         // ignore: avoid_print
         print("PhoneMockupContainer: Navigated to AppInfo for ${detailsToUse['name']}");
       });
@@ -343,7 +331,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     if (_currentScreenView == CurrentScreenView.appInfo && _currentAppDetails != null) {
       setState(() {
         _currentScreenView = CurrentScreenView.clearData;
-        _updateCurrentScreenWidget();
+        _updateCurrentScreenWidget(); 
         // ignore: avoid_print
         print("PhoneMockupContainer: Navigated to ClearDataScreen for ${_currentAppDetails!['name']}");
       });
@@ -436,26 +424,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   Future<void> triggerDialogClearDataCancelAction() async {
     await _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
   }
-
-  // New method to trigger the "Connection & sharing" button in SettingsScreen
-  Future<void> triggerSettingsConnectionSharingAction() async {
-    if (_currentScreenView == CurrentScreenView.settings) {
-      // Find the key for "Connection & sharing" within SettingsScreen's context
-      // This is a bit tricky as the key is managed by SettingsScreen itself.
-      // A cleaner way is to have SettingsScreen expose a method or a GlobalKey to its internal elements.
-      // For simplicity, we'll directly change the view here if we are already on SettingsScreen
-      // and this command is received.
-      setState(() {
-        _currentScreenView = CurrentScreenView.connectionSharing;
-        _updateCurrentScreenWidget();
-      });
-      // A more robust solution would be to pass the _settingsKeys map or a callback
-      // from PhoneMockupContainer to SettingsScreen.
-    } else {
-      // ignore: avoid_print
-      print("PhoneMockupContainer: Not on Settings screen, cannot click 'Connection & sharing'.");
-    }
-  }
   // --- End Trigger Methods ---
 
 
@@ -492,9 +460,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       print("PhoneMockupContainer: Error - No app selected for simulateClearDataClick (CustomClearDataDialog).");
     }
   }
-
-// Required for PhoneMockupContainerState
-
 
 
   void simulateConfirmDelete() {
@@ -649,6 +614,4 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       ),
     );
   }
-
-  void showSettingsScreen() {}
 }

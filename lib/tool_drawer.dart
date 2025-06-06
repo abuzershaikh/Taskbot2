@@ -405,7 +405,7 @@ class ToolDrawerState extends State<ToolDrawer> {
       final String originalCommandText = _commandController.text;
       final String normalizedCommandText = originalCommandText.trim().toLowerCase();
 
-      if (normalizedCommandText == "open settings" || normalizedCommandText == "open_settings") {
+      if (normalizedCommandText == "open settings" || normalizedCommandText == "open_settings" || normalizedCommandText == "open setting") {
         widget.onClose();
         await Future.delayed(const Duration(milliseconds: 300));
         final phoneState = widget.phoneMockupKey.currentState;
