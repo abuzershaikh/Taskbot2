@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart'; // Required for GlobalKey
+import '../phone_mockup/phone_mockup_container.dart'; // Required for PhoneMockupContainerState
+
 // Defines the interface for command handlers and specific implementations.
 
 // Abstract base class for all sub-command handlers.
@@ -49,3 +52,30 @@ class EchoSubCommandHandler implements SubCommandHandler {
 }
 
 // Add more command handlers here as needed by subclassing SubCommandHandler.
+
+// Handler for the "open_settings" command.
+class OpenSettingsSubCommandHandler implements SubCommandHandler {
+  final GlobalKey<PhoneMockupContainerState> _phoneMockupKey;
+
+  OpenSettingsSubCommandHandler(this._phoneMockupKey);
+
+  @override
+  Future<Map<String, String>> execute(String payload) async {
+    print('Flutter (OpenSettingsSubCommandHandler): Attempting to open settings screen.');
+    final phoneState = _phoneMockupKey.currentState;
+
+    if (phoneState != null) {
+      phoneState.showSettingsScreen();
+      return {
+        'status': 'success',
+        'result_payload': 'Settings screen opened successfully.',
+      };
+    } else {
+      print('Flutter (OpenSettingsSubCommandHandler): Failed to open settings - PhoneMockupContainerState is null.');
+      return {
+        'status': 'failed',
+        'result_payload': 'Failed to open settings: PhoneMockupContainerState is null.',
+      };
+    }
+  }
+}

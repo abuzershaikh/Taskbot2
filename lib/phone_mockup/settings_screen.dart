@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'clickable_outline.dart'; // Added import
+import 'connection_sharing_screen.dart'; // Import the new screen
 
 class SettingsScreen extends StatefulWidget { // Changed to StatefulWidget
   final VoidCallback onBack;
@@ -91,17 +92,36 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
           children: items.map((item) {
             final itemTitle = item['title'] as String;
             final itemKey = _settingsKeys[itemTitle];
-            originalOnTap() {
-              // print('$itemTitle tapped!');
+
+            // Determine the action based on the item title
+            VoidCallback? customAction;
+            if (itemTitle == 'Connection & sharing') {
+              customAction = () {
+                // print('Navigating to Connection & sharing screen');
+                // Use a direct callback from PhoneMockupContainer to change screen
+                // This requires a function passed down from PhoneMockupContainer
+                // For now, we'll assume direct navigation will be handled by PhoneMockupContainer
+                // via a command or a direct function call passed from the parent.
+                // We'll add this to PhoneMockupContainer's _handleCommand method.
+                if (itemTitle == 'Connection & sharing') {
+                  // This will be called from the PhoneMockupContainer via a command.
+                  // The actual navigation state change happens in PhoneMockupContainer.
+                  // For now, this onTap serves as a placeholder.
+                  // print('$itemTitle tapped, should navigate to Connection & sharing screen');
+                }
+              };
             }
 
             return Column(
               children: [
                 ClickableOutline( // Wrap ListTile with ClickableOutline
- key: itemKey!, // Use the non-nullable key here
+                  key: itemKey!, // Use the non-nullable key here
                   action: () async { // Make action async
-                    originalOnTap();
-                    // Potentially add other async operations if needed
+                    if (customAction != null) {
+                      customAction();
+                    } else {
+                      // print('$itemTitle tapped!');
+                    }
                   },
                   child: ListTile(
                     leading: Container(
@@ -132,7 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
                             ],
                           )
                         : const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                    onTap: originalOnTap, // Keep original onTap for normal interaction
+                    onTap: customAction, // Use customAction for onTap
                   ),
                 ),
                 if (item != items.last)

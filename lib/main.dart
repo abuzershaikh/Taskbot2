@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
  
 import 'package:flutter_box_transform/flutter_box_transform.dart'; // Import flutter_box_transform
 import 'phone_mockup/app_grid.dart'; // Import for AppGridState
-import 'phone_mockup/phone_mockup_container.dart';
+import 'package:taskbot2/phone_mockup/phone_mockup_container.dart';
 import 'dart:io';
 import 'tool_drawer.dart';
 import 'command_service.dart';
@@ -124,7 +124,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _commandService = CommandService();
-    _commandController = CommandController(_commandService);
+    _commandController = CommandController(_commandService, _phoneMockupKey);
     _commandService.onNewPythonCommand = _commandController.processCommand;
     _commandService.startPolling();
   }

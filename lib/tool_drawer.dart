@@ -402,49 +402,74 @@ class ToolDrawerState extends State<ToolDrawer> {
     }
 
     try {
-      final commandText = _commandController.text;
-      final parsedCommand = _parseCommand(commandText);
+      final String originalCommandText = _commandController.text;
+      final String normalizedCommandText = originalCommandText.trim().toLowerCase();
 
-      if (parsedCommand != null) {
-        final appName = parsedCommand['appName'];
-        final action = parsedCommand['action'];
+      if (normalizedCommandText == "open settings" || normalizedCommandText == "open_settings") {
+        widget.onClose();
+        await Future.delayed(const Duration(milliseconds: 300));
+        final phoneState = widget.phoneMockupKey.currentState;
+        if (phoneState != null) {
+          phoneState.showSettingsScreen();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Opening settings..."),
+              backgroundColor: Colors.green,
+            ));
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Error: Could not access phone state."),
+              backgroundColor: Colors.red,
+            ));
+          }
+        }
+      } else {
+        // Existing logic for other commands (e.g., clear data)
+        final parsedCommand = _parseCommand(originalCommandText); // Use original text
 
-        if (action == 'clearData' && appName != null) {
-          widget.onClose(); // Close the drawer
-          await Future.delayed(const Duration(milliseconds: 300)); // Allow drawer to close
+        if (parsedCommand != null) {
+          final appName = parsedCommand['appName'];
+          final action = parsedCommand['action'];
 
-          final bool simulationSucceeded = await _appAutomationSimulator.startClearDataSimulation(appName);
-          
-          if (!simulationSucceeded && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Error: App '$appName' not found or simulation failed."),
-                backgroundColor: Colors.red,
-              ),
-            );
+          if (action == 'clearData' && appName != null) {
+            widget.onClose(); // Close the drawer
+            await Future.delayed(const Duration(milliseconds: 300)); // Allow drawer to close
+
+            final bool simulationSucceeded = await _appAutomationSimulator.startClearDataSimulation(appName);
+            
+            if (!simulationSucceeded && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Error: App '$appName' not found or simulation failed."),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          } else {
+            // ignore: avoid_print
+            print('Parsed command: $parsedCommand, but action or appName is invalid for simulation.');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Invalid command format for simulation."),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
           }
         } else {
           // ignore: avoid_print
-          print('Parsed command: $parsedCommand, but action or appName is invalid for simulation.');
+          print('Unknown command: $originalCommandText');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("Invalid command format for simulation."),
+                content: Text("Unknown command."), // Updated message
                 backgroundColor: Colors.orange,
               ),
             );
           }
-        }
-      } else {
-        // ignore: avoid_print
-        print('Invalid command.');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Invalid command: Could not parse."),
-              backgroundColor: Colors.orange,
-            ),
-          );
         }
       }
     } finally {
