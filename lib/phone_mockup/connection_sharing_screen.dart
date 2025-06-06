@@ -1,10 +1,17 @@
-// TODO Implement this library.
 import 'package:flutter/material.dart';
 
-class ConnectionSharingScreen extends StatelessWidget {
+class ConnectionSharingScreen extends StatefulWidget {
   final VoidCallback onBack;
 
   const ConnectionSharingScreen({super.key, required this.onBack});
+
+  @override
+  State<ConnectionSharingScreen> createState() => _ConnectionSharingScreenState();
+}
+
+class _ConnectionSharingScreenState extends State<ConnectionSharingScreen> {
+  bool _aeroplaneModeEnabled = false;
+  bool _quickDeviceConnectEnabled = true; // Set to true as per image
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +26,23 @@ class ConnectionSharingScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: onBack,
+          onPressed: widget.onBack,
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           _buildSettingsCard(context, [
-            _buildToggleItem(Icons.airplanemode_on, 'Aeroplane mode', false),
+            _buildToggleItem(
+              Icons.airplanemode_on, // Corrected from airplane_mode_on
+              'Aeroplane mode',
+              _aeroplaneModeEnabled,
+              (bool value) {
+                setState(() {
+                  _aeroplaneModeEnabled = value;
+                });
+              },
+            ),
             _buildTrailingIconItem(Icons.wifi_tethering, 'Personal hotspot'),
             _buildTrailingIconItem(Icons.vpn_key, 'VPN'),
             _buildTrailingIconItem(Icons.dns, 'Private DNS'),
@@ -38,8 +54,16 @@ class ConnectionSharingScreen extends StatelessWidget {
             _buildTrailingIconItem(Icons.screen_share, 'Screencast'),
             _buildTrailingIconItem(Icons.print, 'Print', subtitle: 'On'),
             _buildToggleItem(
-                Icons.devices_other, 'Quick device connect', true,
-                subtitle: 'Discover and connect to nearby devices quickly.'),
+              Icons.devices_other,
+              'Quick device connect',
+              _quickDeviceConnectEnabled,
+              (bool value) {
+                setState(() {
+                  _quickDeviceConnectEnabled = value;
+                });
+              },
+              subtitle: 'Discover and connect to nearby devices quickly.', // Added subtitle as per image
+            ),
           ]),
         ],
       ),
@@ -77,7 +101,7 @@ class ConnectionSharingScreen extends StatelessWidget {
   }
 
   Widget _buildToggleItem(IconData icon, String title, bool initialValue,
-      {String? subtitle}) {
+      ValueChanged<bool> onChanged, {String? subtitle}) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -98,20 +122,17 @@ class ConnectionSharingScreen extends StatelessWidget {
       subtitle: subtitle != null
           ? Text(
               subtitle,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              style: const TextStyle(color: Colors.grey, fontSize: 13), // Style adjusted as per image
             )
           : null,
       trailing: Switch(
         value: initialValue,
-        onChanged: (bool value) {
-          // Handle toggle state change (for now, just print)
-          // print('$title toggled to $value');
-        },
-        activeColor: Colors.blue[700],
+        onChanged: onChanged, // Use the passed onChanged callback
+        activeColor: Colors.blue[700], // Dark blue color for the toggle
       ),
       onTap: () {
-        // Handle tap for the list tile itself
-        // print('$title tapped!');
+        // Tapping the list tile itself should also toggle the switch
+        onChanged(!initialValue);
       },
     );
   }
@@ -144,7 +165,6 @@ class ConnectionSharingScreen extends StatelessWidget {
       trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       onTap: () {
         // Handle tap for navigation
-        // print('$title tapped!');
       },
     );
   }

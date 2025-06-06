@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'clickable_outline.dart'; // Added import
-import 'connection_sharing_screen.dart'; // Import the new screen
+// ignore: unused_import
+import 'phone_mockup/connection_sharing_screen.dart'; // Import the new screen
+import 'phone_mockup_container.dart'; // For AppItemTapCallback
 
 class SettingsScreen extends StatefulWidget { // Changed to StatefulWidget
   final VoidCallback onBack;
-  const SettingsScreen({super.key, required this.onBack});
+  final AppItemTapCallback? onSettingItemTap;
+  const SettingsScreen({super.key, required this.onBack, this.onSettingItemTap});
 
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
@@ -93,34 +96,21 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
             final itemTitle = item['title'] as String;
             final itemKey = _settingsKeys[itemTitle];
 
-            // Determine the action based on the item title
-            VoidCallback? customAction;
-            if (itemTitle == 'Connection & sharing') {
-              customAction = () {
-                // print('Navigating to Connection & sharing screen');
-                // Use a direct callback from PhoneMockupContainer to change screen
-                // This requires a function passed down from PhoneMockupContainer
-                // For now, we'll assume direct navigation will be handled by PhoneMockupContainer
-                // via a command or a direct function call passed from the parent.
-                // We'll add this to PhoneMockupContainer's _handleCommand method.
-                if (itemTitle == 'Connection & sharing') {
-                  // This will be called from the PhoneMockupContainer via a command.
-                  // The actual navigation state change happens in PhoneMockupContainer.
-                  // For now, this onTap serves as a placeholder.
-                  // print('$itemTitle tapped, should navigate to Connection & sharing screen');
-                }
-              };
-            }
-
             return Column(
               children: [
                 ClickableOutline( // Wrap ListTile with ClickableOutline
                   key: itemKey!, // Use the non-nullable key here
                   action: () async { // Make action async
-                    if (customAction != null) {
-                      customAction();
+                    if (widget.onSettingItemTap != null) {
+                      Map<String, String> stringItemDetails = {};
+                      item.forEach((key, value) {
+                        stringItemDetails[key] = value.toString();
+                      });
+                      // Pass the item's title and potentially other details if needed
+                      widget.onSettingItemTap!(itemTitle, itemDetails: stringItemDetails);
                     } else {
-                      // print('$itemTitle tapped!');
+                      // Fallback or error message if the callback isn't provided
+                      print('Tap action not configured for $itemTitle');
                     }
                   },
                   child: ListTile(
@@ -152,7 +142,26 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
                             ],
                           )
                         : const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                    onTap: customAction, // Use customAction for onTap
+                    onTap: () {
+                      if (widget.onSettingItemTap != null) {
+                        Map<String, String> stringItemDetails = {};
+                        item.forEach((key, value) {
+                          stringItemDetails[key] = value.toString();
+                        });
+                        // Pass the item's title and potentially other details if needed
+                        widget.onSettingItemTap!(itemTitle, itemDetails: stringItemDetails);
+                      } else {
+                        // Fallback or error message if the callback isn't provided
+                        print('Tap action not configured for $itemTitle');
+                      }
+                      // The existing customAction logic was primarily for 'Connection & sharing'.
+                      // The new onSettingItemTap callback, when implemented in PhoneMockupContainer's handleItemTap,
+                      // should now handle the navigation for 'Connection & sharing'.
+                      // So, the direct call to customAction here might be redundant if handleItemTap covers it.
+                      // For now, we'll rely on onSettingItemTap to handle the action.
+                      // If specific UI changes within SettingsScreen itself were needed for customAction,
+                      // that would require a different approach.
+                    },
                   ),
                 ),
                 if (item != items.last)

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:io'; // Import for File
 import 'dart:math'; // Import for Random
 import 'clickable_outline.dart'; // Import the new widget
-import 'phone_mockup_container.dart'; // Required for actions
+import 'phone_mockup_container.dart'; // Required for actions, and AppItemTapCallback
 
 class AppGrid extends StatefulWidget {
   final GlobalKey<PhoneMockupContainerState> phoneMockupKey;
   final File? wallpaperImage; // Added wallpaper image parameter
+  final AppItemTapCallback? onAppTap;
 
   // widget.key will be AppGrid's own key, passed as widget.appGridKey from PhoneMockupContainer
   // So, it's fine to use super.key here if AppGrid itself needs a key from its parent.
@@ -16,6 +17,7 @@ class AppGrid extends StatefulWidget {
     super.key,
     required this.phoneMockupKey,
     this.wallpaperImage, // Added to constructor
+    this.onAppTap,
   });
 
   @override
@@ -236,16 +238,14 @@ class AppGridState extends State<AppGrid> {
             action: appAction,
             child: GestureDetector(
               onTap: () {
-                // Manual tap: For now, let's make it also trigger the long press action
-                // or a specific tap action if defined on PhoneMockupContainerState.
-                // To avoid confusion, perhaps manual taps should be disabled or have a distinct visual feedback
-                // if they are not supposed to be part of the automated flow.
-                // For this simulation, a manual tap could just show a message.
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Manual tap on $appName. Automation uses defined action (long press).")),
-                );
-                // Optionally, to make manual tap behave like the automated one:
-                // widget.phoneMockupKey.currentState?.handleAppLongPress(app);
+                if (widget.onAppTap != null) {
+                  widget.onAppTap!(app['name']!, itemDetails: app);
+                } else {
+                  // Fallback or error, though onAppTap should ideally be provided
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Tap action not configured for ${app['name']}.")),
+                  );
+                }
               },
               onLongPress: () {
                 // Manual long press should behave like the automated action.

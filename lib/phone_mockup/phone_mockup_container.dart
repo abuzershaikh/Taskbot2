@@ -12,9 +12,12 @@ import 'app_info_screen.dart';
 import 'clear_data_screen.dart';
 import 'custom_clear_data_dialog.dart'; // Ensured this import is clean
 import 'clickable_outline.dart'; // Required for GlobalKey<ClickableOutlineState>
+import 'connection_sharing_screen.dart';
 
 // Enum to manage the current view being displayed in the phone mockup
-enum CurrentScreenView { appGrid, settings, appInfo, clearData }
+enum CurrentScreenView { appGrid, settings, appInfo, clearData, connectionSharing }
+
+typedef AppItemTapCallback = void Function(String itemName, {Map<String, String>? itemDetails});
 
 class PhoneMockupContainer extends StatefulWidget {
   final GlobalKey<AppGridState> appGridKey; // Key for the AppGrid it will contain
@@ -98,6 +101,50 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     _updateCurrentScreenWidget(); // Initialize with AppGrid
   }
 
+  void handleItemTap(String itemName, {Map<String, String>? itemDetails}) {
+    print('PhoneMockupContainer: Item tapped: $itemName');
+    if (itemName == 'Settings') {
+      setState(() {
+        _currentScreenView = CurrentScreenView.settings;
+        _currentAppDetails = null; // Settings screen doesn't represent a single app's details
+        _updateCurrentScreenWidget();
+      });
+    } else if (_currentScreenView == CurrentScreenView.settings) {
+      // If already on settings screen, handle settings item tap
+      // This might involve navigating to a sub-setting screen or performing an action.
+      // For now, let's just print. This logic will be expanded in SettingsScreen itself.
+      print('Settings item tapped: $itemName');
+      // Example: if (itemName == 'Wi-Fi') { /* navigate to Wi-Fi settings */ }
+      // If 'Connection & sharing' is tapped, it should navigate.
+      if (itemName == 'Connection & sharing') {
+        setState(() {
+          _currentScreenView = CurrentScreenView.connectionSharing;
+          _updateCurrentScreenWidget();
+        });
+      } else {
+        // For other settings items, print for now or handle as needed
+        print('Settings item tapped: $itemName');
+      }
+
+    } else if (itemDetails != null) {
+      // This case is for app icons from the AppGrid
+      navigateToAppInfo(appDetails: Map<String, String>.from(itemDetails));
+    } else {
+      // Fallback for items that are not 'Settings' and don't have details (e.g., from AppGrid but details missing)
+      final appDetails = widget.appGridKey.currentState?.getAppByName(itemName);
+      if (appDetails != null && appDetails.isNotEmpty) {
+        navigateToAppInfo(appDetails: Map<String, String>.from(appDetails));
+      } else {
+        print("PhoneMockupContainer: Item '$itemName' details not found for tap.");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Item '$itemName' details not found.")),
+          );
+        }
+      }
+    }
+  }
+
   @override
   void didUpdateWidget(PhoneMockupContainer oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -115,6 +162,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           key: widget.appGridKey,
           phoneMockupKey: widget.key as GlobalKey<PhoneMockupContainerState>,
           wallpaperImage: widget.mockupWallpaperImage, // Corrected line
+          onAppTap: handleItemTap,
         );
         break;
       case CurrentScreenView.settings:
@@ -127,6 +175,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
+          onSettingItemTap: handleItemTap,
         );
         print("PhoneMockupContainerState: _currentAppScreenWidget is now SettingsScreen.");
         break;
@@ -194,6 +243,17 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           _updateCurrentScreenWidget();
         }
         break;
+      case CurrentScreenView.connectionSharing:
+        _currentAppScreenWidget = ConnectionSharingScreen(
+          onBack: () {
+            setState(() {
+              _currentScreenView = CurrentScreenView.settings; // Navigate back to Settings
+              // _currentAppDetails = null; // Not strictly necessary when coming from a sub-screen of settings
+              _updateCurrentScreenWidget();
+            });
+          },
+        );
+        break;
     }
   }
 
@@ -219,6 +279,11 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         await triggerAppInfoBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.clearData) {
         await triggerClearDataBackButtonAction();
+      } else if (_currentScreenView == CurrentScreenView.connectionSharing) {
+        setState(() {
+          _currentScreenView = CurrentScreenView.settings;
+          _updateCurrentScreenWidget();
+        });
       } else if (_currentScreenView == CurrentScreenView.settings) {
          setState(() { // Settings back is simpler, no key needed for it yet.
           _currentScreenView = CurrentScreenView.appGrid;
@@ -256,24 +321,10 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   void _handleAppTap(String appName) {
     // ignore: avoid_print
     print('PhoneMockupContainer: App tapped: $appName');
-    if (appName == 'Settings') {
-      setState(() {
-        _currentScreenView = CurrentScreenView.settings;
-        _currentAppDetails = null;
-        _updateCurrentScreenWidget();
-      });
-    } else {
-      final appDetails = widget.appGridKey.currentState?.getAppByName(appName);
-      if (appDetails != null) {
-        navigateToAppInfo(appDetails: Map<String, String>.from(appDetails));
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("App '$appName' details not found.")),
-          );
-        }
-      }
-    }
+    // This method is now effectively replaced by handleItemTap, 
+    // but might still be called by _handleCommand.
+    // Consider refactoring _handleCommand to use handleItemTap directly.
+    handleItemTap(appName); 
   }
 
   void handleAppLongPress(Map<String, String> app) {
