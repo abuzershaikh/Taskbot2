@@ -6,13 +6,16 @@ import 'phone_mockup_container.dart'; // Required for actions
 
 class AppGrid extends StatefulWidget {
   final GlobalKey<PhoneMockupContainerState> phoneMockupKey;
+  final File? wallpaperImage; // Added wallpaper image parameter
+
   // widget.key will be AppGrid's own key, passed as widget.appGridKey from PhoneMockupContainer
   // So, it's fine to use super.key here if AppGrid itself needs a key from its parent.
   // However, the key for AppGridState is what's important for PhoneMockupContainer to access AppGridState.
   // Let's assume super.key is the key for AppGrid widget itself.
   const AppGrid({
-    super.key, 
+    super.key,
     required this.phoneMockupKey,
+    this.wallpaperImage, // Added to constructor
   });
 
   @override
@@ -166,7 +169,16 @@ class AppGridState extends State<AppGrid> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      decoration: widget.wallpaperImage != null
+          ? BoxDecoration(
+              image: DecorationImage(
+                image: FileImage(widget.wallpaperImage!),
+                fit: BoxFit.cover,
+              ),
+            )
+          : const BoxDecoration(
+              color: Colors.white,
+            ),
       child: GridView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16.0),

@@ -1,3 +1,5 @@
+import 'dart:io' show File;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui'; // For BackdropFilter
@@ -16,10 +18,12 @@ enum CurrentScreenView { appGrid, settings, appInfo, clearData }
 
 class PhoneMockupContainer extends StatefulWidget {
   final GlobalKey<AppGridState> appGridKey; // Key for the AppGrid it will contain
+  final File? mockupWallpaperImage; // Added mockup wallpaper image
 
   const PhoneMockupContainer({
     super.key, // This is the key for PhoneMockupContainer itself
     required this.appGridKey,
+    this.mockupWallpaperImage, // Added new parameter
   });
 
   // Static key and method - assuming these are intended to remain, cleaned from markers.
@@ -83,12 +87,23 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     _updateCurrentScreenWidget(); // Initialize with AppGrid
   }
 
+  @override
+  void didUpdateWidget(PhoneMockupContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.mockupWallpaperImage != oldWidget.mockupWallpaperImage &&
+        _currentScreenView == CurrentScreenView.appGrid) {
+      _updateCurrentScreenWidget();
+      setState(() {});
+    }
+  }
+
   void _updateCurrentScreenWidget() {
     switch (_currentScreenView) {
       case CurrentScreenView.appGrid:
         _currentAppScreenWidget = AppGrid(
           key: widget.appGridKey,
           phoneMockupKey: widget.key as GlobalKey<PhoneMockupContainerState>,
+          wallpaperImage: widget.mockupWallpaperImage, // Corrected line
         );
         break;
       case CurrentScreenView.settings:

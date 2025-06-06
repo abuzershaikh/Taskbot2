@@ -21,6 +21,7 @@ class ToolDrawer extends StatefulWidget {
   final Function(File?) onWallpaperChanged;
   final VoidCallback onRemoveWallpaper;
   final File? currentWallpaper;
+  final Function(File?) onMockupWallpaperChanged; // Added new callback
 
   const ToolDrawer({
     super.key,
@@ -35,6 +36,7 @@ class ToolDrawer extends StatefulWidget {
     required this.appGridKey, // NEW
     required this.onWallpaperChanged,
     required this.onRemoveWallpaper,
+    required this.onMockupWallpaperChanged, // Added to constructor
     this.currentWallpaper,
   });
 
@@ -248,7 +250,39 @@ class ToolDrawerState extends State<ToolDrawer> {
                     textStyle: const TextStyle(fontSize: 16),
                   ),
                 ),
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
+                // New buttons for Mockup Wallpaper
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final ImagePicker picker = ImagePicker();
+                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      widget.onMockupWallpaperChanged(File(image.path));
+                    }
+                    widget.onClose();
+                  },
+                  icon: const Icon(Icons.photo_size_select_actual_outlined),
+                  label: const Text('Set Mockup WP'), // Shorter label
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    widget.onMockupWallpaperChanged(null);
+                    widget.onClose();
+                  },
+                  icon: const Icon(Icons.hide_image_outlined),
+                  label: const Text('Remove Mockup WP'), // Shorter label
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    textStyle: const TextStyle(fontSize: 16),
+                    backgroundColor: Colors.orangeAccent, // Different color for remove
+                  ),
+                ),
+                const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: _pickIcons,
                 icon: const Icon(Icons.upload_file), // Or Icons.add_photo_alternate_multiple_outline

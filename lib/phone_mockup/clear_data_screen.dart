@@ -1,6 +1,6 @@
 // File: lib/phone_mockup/clear_data_screen.dart
 import 'package:flutter/material.dart';
-import 'package:taskbot/phone_mockup/custom_clear_data_dialog.dart';
+import 'package:taskbot2/phone_mockup/custom_clear_data_dialog.dart';
 import 'clickable_outline.dart';
 
 // Changed back to StatelessWidget

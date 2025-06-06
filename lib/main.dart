@@ -39,6 +39,8 @@ class _MyAppState extends State<MyApp> {
   File? _frameImage;
   Rect? _frameRect; // Using Rect for flutter_box_transform
 
+  File? _mockupWallpaperImage; // Added mockup wallpaper image state
+
   bool _isToolDrawerOpen = false;
 
   void _onImageChanged(File? newImage) {
@@ -50,6 +52,12 @@ class _MyAppState extends State<MyApp> {
         _imageScale = 1.0;
         _lastScale = 1.0;
       }
+    });
+  }
+
+  void _onMockupWallpaperChanged(File? newImage) { // Added callback for mockup wallpaper
+    setState(() {
+      _mockupWallpaperImage = newImage;
     });
   }
 
@@ -157,7 +165,7 @@ class _MyAppState extends State<MyApp> {
             children: [
               Align(
                 alignment: Alignment.center,
- child: PhoneMockupContainer(key: _phoneMockupKey, appGridKey: _appGridKey,), // Pass the key here
+ child: PhoneMockupContainer(key: _phoneMockupKey, appGridKey: _appGridKey, mockupWallpaperImage: _mockupWallpaperImage,), // Pass the key and mockup wallpaper
               ),
 
               if (_pickedImage != null)
@@ -276,6 +284,7 @@ class _MyAppState extends State<MyApp> {
                 onClose: _closeToolDrawer,
                 onWallpaperChanged: _onWallpaperChanged,
                 onRemoveWallpaper: _removeWallpaper,
+                onMockupWallpaperChanged: _onMockupWallpaperChanged, // Pass the new callback
                 phoneMockupKey: _phoneMockupKey, // Pass instance variable _phoneMockupKey
                 appGridKey: _appGridKey,       // Pass instance variable _appGridKey
               ),
