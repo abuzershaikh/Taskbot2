@@ -201,24 +201,24 @@ class AppGridState extends State<AppGrid> {
           if (iconPath.startsWith('assets/')) {
             iconWidget = Image.asset(
               iconPath,
-              width: 50,
-              height: 50,
+              width: 48,
+              height: 48,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 print("Error loading asset: $iconPath");
-                return const Icon(Icons.broken_image, size: 50); // Placeholder for broken asset
+                return const Icon(Icons.broken_image, size: 48); // Placeholder for broken asset
               },
             );
           } else {
             iconWidget = Image.file(
               File(iconPath), // Create a File object
-              width: 50,
-              height: 50,
+              width: 48,
+              height: 48,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 // Handle potential errors if the file path is invalid or image is corrupt
                 print("Error loading file: $iconPath - $error");
-                return const Icon(Icons.broken_image, size: 50); // Placeholder for broken file image
+                return const Icon(Icons.broken_image, size: 48); // Placeholder for broken file image
               },
             );
           }
