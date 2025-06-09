@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io'; // Import for File
 import 'dart:math'; // Import for Random
+import 'dart:async'; // Import for Future
 import 'clickable_outline.dart'; // Import the new widget
 import 'phone_mockup_container.dart'; // Required for actions, and AppItemTapCallback
 
@@ -155,17 +156,101 @@ class AppGridState extends State<AppGrid> {
     }).toList();
   }
 
-  void scrollToApp(String appName) {
+  Future<void> scrollToApp(String appName) async {
+    final double maxScroll = _scrollController.position.maxScrollExtent;
+    final DateTime startTime = DateTime.now();
+    final int randomScrollDurationSeconds = _random.nextInt(6) + 10; // 10 to 15 seconds
+
+    final List<Curve> curves = [
+      Curves.easeInOut,
+      Curves.bounceInOut,
+      Curves.elasticInOut,
+      Curves.linear,
+      Curves.easeInCubic,
+      Curves.easeOutCirc,
+    ];
+
+    while (DateTime.now().difference(startTime).inSeconds < randomScrollDurationSeconds) {
+      final double randomPosition = _random.nextDouble() * maxScroll;
+      final int randomDurationMs = _random.nextInt(1001) + 500; // 500ms to 1500ms
+      final Curve randomCurve = curves[_random.nextInt(curves.length)];
+
+      await _scrollController.animateTo(
+        randomPosition,
+        duration: Duration(milliseconds: randomDurationMs),
+        curve: randomCurve,
+      );
+      await Future.delayed(Duration(milliseconds: randomDurationMs)); // Wait for animation
+    }
+
+    // Original logic to scroll to the target app
     final index = _apps.indexWhere((app) => app['name'] == appName);
     if (index != -1) {
       const double itemHeight = 100; // Adjusted for typical item height
-      final double offset = (index ~/ 3) * itemHeight; 
+      final double offset = (index ~/ 3) * itemHeight;
+      // Ensure the offset does not exceed maxScrollExtent
+      final double targetOffset = min(offset, maxScroll);
+      
       _scrollController.animateTo(
-        offset,
+        targetOffset,
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
     }
+  }
+
+  Future<void> performSlowRandomScroll(Duration totalDuration) async {
+    if (!_scrollController.hasClients || _scrollController.position.maxScrollExtent <= 0) {
+      print("AppGridState: Cannot perform slow scroll, ScrollController not ready or no scroll extent.");
+      return;
+    }
+
+    final DateTime overallStartTime = DateTime.now();
+    final double maxScroll = _scrollController.position.maxScrollExtent;
+    final List<Curve> curves = [ // Same curves as in scrollToApp, or a subset for "slower" feel
+      Curves.easeInOut, Curves.linear, Curves.easeInQuad, Curves.easeOutQuad
+    ];
+
+    print("AppGridState: Starting slow random scroll for ${totalDuration.inSeconds} seconds.");
+
+    while (DateTime.now().difference(overallStartTime) < totalDuration) {
+      // 1. Determine scroll animation duration (0.5s to 1.5s)
+      final int scrollAnimMillis = _random.nextInt(1001) + 500; // 500ms to 1500ms
+
+      // Check if remaining time is less than this scroll animation
+      if (DateTime.now().difference(overallStartTime) + Duration(milliseconds: scrollAnimMillis) > totalDuration) {
+        break; // Not enough time for a full scroll animation, exit loop
+      }
+
+      final double randomPosition = _random.nextDouble() * maxScroll;
+      final Curve randomCurve = curves[_random.nextInt(curves.length)];
+
+      print("AppGridState: Slow scrolling to ${randomPosition.toStringAsFixed(1)} over ${scrollAnimMillis}ms.");
+      await _scrollController.animateTo(
+        randomPosition,
+        duration: Duration(milliseconds: scrollAnimMillis),
+        curve: randomCurve,
+      );
+      // Wait for scroll animation to complete (already awaited by animateTo, but an explicit delay can also be used if animateTo doesn't await completion reliably in all contexts)
+      // await Future.delayed(Duration(milliseconds: scrollAnimMillis)); // animateTo is a Future, so it's awaited.
+
+      // Check remaining time again before pause
+      if (DateTime.now().difference(overallStartTime) >= totalDuration) {
+        break; 
+      }
+
+      // 2. Determine pause duration (0.5s to 2s)
+      final int pauseMillis = _random.nextInt(1501) + 500; // 500ms to 2000ms
+
+      // Check if remaining time is less than this pause
+      if (DateTime.now().difference(overallStartTime) + Duration(milliseconds: pauseMillis) > totalDuration) {
+        break; // Not enough time for a full pause, exit loop
+      }
+      
+      print("AppGridState: Pausing for ${pauseMillis}ms.");
+      await Future.delayed(Duration(milliseconds: pauseMillis));
+    }
+    print("AppGridState: Finished slow random scroll.");
   }
 
   @override

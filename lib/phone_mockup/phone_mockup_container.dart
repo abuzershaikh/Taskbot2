@@ -3,6 +3,7 @@ import 'dart:io' show File;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui'; // For BackdropFilter
+import 'dart:async'; // For Timer (used in showInternalToast Future.delayed)
 
 import 'app_grid.dart';
 import 'settings_screen.dart';
@@ -13,6 +14,7 @@ import 'clear_data_screen.dart';
 import 'custom_clear_data_dialog.dart'; // Ensured this import is clean
 import 'clickable_outline.dart'; // Required for GlobalKey<ClickableOutlineState>
 import 'connection_sharing_screen.dart';
+import 'internal_toast.dart'; // Import the InternalToast widget
 
 // Enum to manage the current view being displayed in the phone mockup
 enum CurrentScreenView { appGrid, settings, appInfo, clearData, connectionSharing }
@@ -51,6 +53,11 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
 
   bool _isBlurred = false;
   Widget? _activeDialog;
+
+  // --- Toast State Variables ---
+  String? _currentToastMessage;
+  bool _isToastVisible = false;
+  Duration _toastDuration = const Duration(seconds: 3);
 
   // --- AppInfoScreen Keys ---
   final GlobalKey<ClickableOutlineState> _appInfoBackButtonKey = GlobalKey();
@@ -93,6 +100,32 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       _updateCurrentScreenWidget();
       print("PhoneMockupContainerState: _updateCurrentScreenWidget() called from showSettingsScreen.");
     });
+  }
+
+  void showInternalToast(String message, {Duration duration = const Duration(seconds: 3)}) {
+    // Hides current toast immediately if one is visible, then shows new one after a brief delay.
+    if (_isToastVisible) {
+      setState(() {
+        _isToastVisible = false;
+      });
+      // Allow old toast to be removed before showing the new one.
+      // This prevents visual glitches if the message/key changes too quickly for AnimatedSwitcher/FadeTransition.
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (!mounted) return; // Guard against calling setState on unmounted widget
+        setState(() {
+          _currentToastMessage = message;
+          _toastDuration = duration;
+          _isToastVisible = true;
+        });
+      });
+    } else {
+      if (!mounted) return; // Guard against calling setState on unmounted widget
+      setState(() {
+        _currentToastMessage = message;
+        _toastDuration = duration;
+        _isToastVisible = true;
+      });
+    }
   }
 
   @override
@@ -407,7 +440,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       });
     }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Data cleared for $appName')));
+      showInternalToast('Data cleared for $appName');
     }
   }
 
@@ -426,7 +459,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       });
     }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cache cleared for $appName')));
+      showInternalToast('Cache cleared for $appName');
     }
   }
 
@@ -588,7 +621,20 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               top: 31,
               child: Material(
                 type: MaterialType.transparency,
-                child: _currentAppScreenWidget,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 800),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  // Using ValueKey with _currentScreenView to ensure AnimatedSwitcher detects change
+                  // when _currentAppScreenWidget instance might be the same type but different content (e.g. AppInfo for different apps)
+                  // or when the widget itself is entirely new.
+                  // The key here is on the child of AnimatedSwitcher.
+                  child: KeyedSubtree(
+                    key: ValueKey<CurrentScreenView>(_currentScreenView), // Ensures switcher sees a change
+                    child: _currentAppScreenWidget
+                  ),
+                ),
               ),
             ),
             if (_isBlurred)
@@ -617,6 +663,31 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                   ),
                 ),
               ),
+            
+            // --- Display InternalToast ---
+            if (_isToastVisible && _currentToastMessage != null)
+              Positioned(
+                bottom: 70.0, // Position from bottom, adjust as needed
+                left: 20.0,   // Padding from left
+                right: 20.0,  // Padding from right
+                child: Align( // Use Align to ensure it doesn't stretch if InternalToast has fixed width
+                  alignment: Alignment.bottomCenter,
+                  child: InternalToast(
+                    key: ValueKey<String?>(_currentToastMessage), // Ensures widget rebuilds on message change
+                    message: _currentToastMessage!,
+                    visibleDuration: _toastDuration,
+                    onDismissed: () {
+                      if (!mounted) return;
+                      setState(() {
+                        _isToastVisible = false;
+                        // Consider clearing _currentToastMessage = null; if it helps manage state,
+                        // but InternalToast should not be in tree if _isToastVisible is false.
+                      });
+                    },
+                  ),
+                ),
+              ),
+
             NotificationDrawer(key: _drawerKey),
           ],
         ),
