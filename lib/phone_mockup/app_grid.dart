@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:io'; // Import for File
 import 'dart:math'; // Import for Random
 import 'dart:async'; // Import for Future
+import 'dart:convert'; // for json.decode
+import 'package:flutter/services.dart' show rootBundle; // for rootBundle
 import 'clickable_outline.dart'; // Import the new widget
 import 'phone_mockup_container.dart'; // Required for actions, and AppItemTapCallback
 
@@ -40,6 +42,53 @@ class AppGridState extends State<AppGrid> {
       if (appName != null) {
         appItemKeys[appName] = GlobalKey<ClickableOutlineState>();
       }
+    }
+    _loadIconsFromAssets(); // Call the new method
+  }
+
+  Future<void> _loadIconsFromAssets() async {
+    try {
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      final List<Map<String, String>> newlyFoundIcons = [];
+      final existingIconPaths = _initialApps.map((app) => app['icon']).toSet();
+
+      manifestMap.keys.forEach((String key) {
+        if (key.startsWith('assets/icons/') && !existingIconPaths.contains(key)) {
+          // Extract icon name
+          // e.g., assets/icons/my_app.png -> my_app
+          // e.g., assets/icons/my app.png -> my app
+          String namePart = key.substring('assets/icons/'.length);
+          // Remove extension (e.g., .png, .jpg, .jpeg, .gif, .webp)
+          final dotIndex = namePart.lastIndexOf('.');
+          if (dotIndex != -1) {
+            namePart = namePart.substring(0, dotIndex);
+          }
+          // Replace underscores with spaces for a cleaner name if desired, or keep as is.
+          // For this example, let's keep underscores if they are there,
+          // but the main goal is to handle spaces in filenames correctly.
+          // The problem description implies 'my_app' from 'my_app.png' and 'my app' from 'my app.png'.
+          // The current logic achieves this.
+
+          newlyFoundIcons.add({'name': namePart, 'icon': key});
+        }
+      });
+
+      if (newlyFoundIcons.isNotEmpty) {
+        // Filter out icons that might already be in _apps if _loadIconsFromAssets is called multiple times
+        // or if some icons were added by other means before this completes.
+        // This check is more robust if names are guaranteed unique.
+        final currentAppNames = _apps.map((app) => app['name']).toSet();
+        final trulyNewIcons = newlyFoundIcons.where((icon) => !currentAppNames.contains(icon['name'])).toList();
+
+        if (trulyNewIcons.isNotEmpty) {
+          addIcons(trulyNewIcons);
+        }
+      }
+    } catch (e) {
+      // Handle errors, e.g., AssetManifest.json not found or parsing error
+      print('Error loading icons from assets: $e');
     }
   }
 
