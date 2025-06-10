@@ -1,23 +1,22 @@
+// File: lib/phone_mockup/settings_screen.dart
 import 'package:flutter/material.dart';
-import 'clickable_outline.dart'; // Added import
-// ignore: unused_import
-import 'phone_mockup/connection_sharing_screen.dart'; // Import the new screen
-import 'phone_mockup_container.dart'; // For AppItemTapCallback
+import 'clickable_outline.dart';
+import 'phone_mockup_container.dart';
 
-class SettingsScreen extends StatefulWidget { // Changed to StatefulWidget
+class SettingsScreen extends StatefulWidget {
   final VoidCallback onBack;
   final AppItemTapCallback? onSettingItemTap;
   const SettingsScreen({super.key, required this.onBack, this.onSettingItemTap});
 
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
+
+  getSettingItemKey(String target) {}
 }
 
-class _SettingsScreenState extends State<SettingsScreen> { // New State class
-  // Define GlobalKeys for each interactive ListTile
+class _SettingsScreenState extends State<SettingsScreen> {
   final Map<String, GlobalKey<ClickableOutlineState>> _settingsKeys = {};
 
-  // Data for settings items - moved here to be accessible for key initialization
   final List<Map<String, dynamic>> primarySettingsData = [
     {'icon': Icons.wifi, 'title': 'Wi-Fi', 'trailing': 'Off', 'isToggle': false},
     {'icon': Icons.swap_vert, 'title': 'Mobile network', 'trailing': null},
@@ -41,7 +40,6 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
   @override
   void initState() {
     super.initState();
-    // Initialize keys
     for (var item in primarySettingsData) {
       _settingsKeys[item['title'] as String] = GlobalKey<ClickableOutlineState>();
     }
@@ -64,7 +62,7 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
         ),
         backgroundColor: Colors.blueGrey[50],
         elevation: 0,
-        leading: IconButton( // Back button remains IconButton
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: widget.onBack,
         ),
@@ -98,18 +96,20 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
 
             return Column(
               children: [
-                ClickableOutline( // Wrap ListTile with ClickableOutline
-                  key: itemKey!, // Use the non-nullable key here
-                  action: () async { // Make action async
+                ClickableOutline(
+                  key: itemKey!,
+                  action: () async {
                     if (widget.onSettingItemTap != null) {
                       Map<String, String> stringItemDetails = {};
                       item.forEach((key, value) {
-                        stringItemDetails[key] = value.toString();
+                        // Only add values that are already Strings or can be converted safely.
+                        // IconData should not be part of itemDetails if it expects String.
+                        if (key != 'icon') { // Exclude 'icon' from stringItemDetails
+                          stringItemDetails[key] = value.toString();
+                        }
                       });
-                      // Pass the item's title and potentially other details if needed
                       widget.onSettingItemTap!(itemTitle, itemDetails: stringItemDetails);
                     } else {
-                      // Fallback or error message if the callback isn't provided
                       print('Tap action not configured for $itemTitle');
                     }
                   },
@@ -146,30 +146,23 @@ class _SettingsScreenState extends State<SettingsScreen> { // New State class
                       if (widget.onSettingItemTap != null) {
                         Map<String, String> stringItemDetails = {};
                         item.forEach((key, value) {
-                          stringItemDetails[key] = value.toString();
+                          if (key != 'icon') { // Exclude 'icon' from stringItemDetails
+                            stringItemDetails[key] = value.toString();
+                          }
                         });
-                        // Pass the item's title and potentially other details if needed
                         widget.onSettingItemTap!(itemTitle, itemDetails: stringItemDetails);
                       } else {
-                        // Fallback or error message if the callback isn't provided
                         print('Tap action not configured for $itemTitle');
                       }
-                      // The existing customAction logic was primarily for 'Connection & sharing'.
-                      // The new onSettingItemTap callback, when implemented in PhoneMockupContainer's handleItemTap,
-                      // should now handle the navigation for 'Connection & sharing'.
-                      // So, the direct call to customAction here might be redundant if handleItemTap covers it.
-                      // For now, we'll rely on onSettingItemTap to handle the action.
-                      // If specific UI changes within SettingsScreen itself were needed for customAction,
-                      // that would require a different approach.
                     },
                   ),
                 ),
                 if (item != items.last)
                   const Divider(
-                    indent: 72, // Standard indent for Material list tiles
-                    endIndent: 16, // Standard end indent
-                    height: 1, // Standard height for divider
-                    color: Colors.black12, // Standard color for divider
+                    indent: 72,
+                    endIndent: 16,
+                    height: 1,
+                    color: Colors.black12,
                   ),
               ],
             );

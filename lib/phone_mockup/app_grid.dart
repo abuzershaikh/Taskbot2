@@ -54,7 +54,7 @@ class AppGridState extends State<AppGrid> {
       final List<Map<String, String>> newlyFoundIcons = [];
       final existingIconPaths = _initialApps.map((app) => app['icon']).toSet();
 
-      manifestMap.keys.forEach((String key) {
+      for (var key in manifestMap.keys) {
         if (key.startsWith('assets/icons/') && !existingIconPaths.contains(key)) {
           // Extract icon name
           // e.g., assets/icons/my_app.png -> my_app
@@ -73,7 +73,7 @@ class AppGridState extends State<AppGrid> {
 
           newlyFoundIcons.add({'name': namePart, 'icon': key});
         }
-      });
+      }
 
       if (newlyFoundIcons.isNotEmpty) {
         // Filter out icons that might already be in _apps if _loadIconsFromAssets is called multiple times
@@ -391,7 +391,7 @@ class AppGridState extends State<AppGrid> {
                   iconWidget, // Use the determined iconWidget
                   const SizedBox(height: 8),
                   Text(
-                    appName,
+                    appName.length > 9 ? '${appName.substring(0, 9)}...' : appName,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
