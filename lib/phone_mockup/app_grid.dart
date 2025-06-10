@@ -132,6 +132,10 @@ class AppGridState extends State<AppGrid> {
       return null;
     }
   }
+
+  List<Map<String, String>> getAllApps() {
+    return _apps;
+  }
   
   GlobalKey<ClickableOutlineState>? getKeyForApp(String appName) {
     return appItemKeys[appName];

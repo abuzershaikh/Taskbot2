@@ -25,7 +25,7 @@ class Apps1Screen extends StatefulWidget {
     required this.autoLaunchKey,
     required this.specialAppAccessKey,
     required this.appLockKey,
-    required this.dualAppsKey,
+    required this.dualAppsKey, required Null Function() onAppManagementTap,
   });
 
   @override

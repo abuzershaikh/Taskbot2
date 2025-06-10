@@ -14,10 +14,12 @@ import 'clear_data_screen.dart';
 import 'custom_clear_data_dialog.dart'; // Ensured this import is clean
 import 'clickable_outline.dart'; // Required for GlobalKey<ClickableOutlineState>
 import 'connection_sharing_screen.dart';
-import 'internal_toast.dart'; // Import the InternalToast widget
+import 'internal_toast.dart';
+import 'apps1.dart'; // Import for Apps1Screen
+import 'app_management_screen.dart'; // Import for AppManagementScreen
 
 // Enum to manage the current view being displayed in the phone mockup
-enum CurrentScreenView { appGrid, settings, appInfo, clearData, connectionSharing }
+enum CurrentScreenView { appGrid, settings, appInfo, clearData, connectionSharing, apps1, appManagement }
 
 typedef AppItemTapCallback = void Function(String itemName, {Map<String, String>? itemDetails});
 
@@ -83,6 +85,18 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   // --- CustomClearDataDialog Keys ---
   final GlobalKey<ClickableOutlineState> _clearDataDialogCancelKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _clearDataDialogConfirmKey = GlobalKey();
+  
+  // --- Apps1Screen Keys ---
+  final GlobalKey<ClickableOutlineState> _apps1BackButtonKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _appManagementKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _defaultAppsKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _disabledAppsKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _recoverSystemAppsKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _autoLaunchKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _specialAppAccessKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _appLockKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _dualAppsKey = GlobalKey();
+
 
   void dismissDialog() {
     setState(() {
@@ -144,12 +158,12 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       });
     } else if (_currentScreenView == CurrentScreenView.settings) {
       // If already on settings screen, handle settings item tap
-      // This might involve navigating to a sub-setting screen or performing an action.
-      // For now, let's just print. This logic will be expanded in SettingsScreen itself.
-      print('Settings item tapped: $itemName');
-      // Example: if (itemName == 'Wi-Fi') { /* navigate to Wi-Fi settings */ }
-      // If 'Connection & sharing' is tapped, it should navigate.
-      if (itemName == 'Connection & sharing') {
+      if (itemName == 'Apps') {
+        setState(() {
+          _currentScreenView = CurrentScreenView.apps1;
+          _updateCurrentScreenWidget();
+        });
+      } else if (itemName == 'Connection & sharing') {
         setState(() {
           _currentScreenView = CurrentScreenView.connectionSharing;
           _updateCurrentScreenWidget();
@@ -158,7 +172,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         // For other settings items, print for now or handle as needed
         print('Settings item tapped: $itemName');
       }
-
     } else if (itemDetails != null) {
       // This case is for app icons from the AppGrid
       navigateToAppInfo(appDetails: Map<String, String>.from(itemDetails));
@@ -199,7 +212,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         );
         break;
       case CurrentScreenView.settings:
-        print("PhoneMockupContainerState: _updateCurrentScreenWidget() is updating for SettingsScreen.");
         _currentAppScreenWidget = SettingsScreen(
           onBack: () {
             setState(() {
@@ -210,7 +222,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           },
           onSettingItemTap: handleItemTap,
         );
-        print("PhoneMockupContainerState: _currentAppScreenWidget is now SettingsScreen.");
         break;
       case CurrentScreenView.appInfo:
         if (_currentAppDetails != null) {
@@ -281,11 +292,45 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           onBack: () {
             setState(() {
               _currentScreenView = CurrentScreenView.settings; // Navigate back to Settings
-              // _currentAppDetails = null; // Not strictly necessary when coming from a sub-screen of settings
               _updateCurrentScreenWidget();
             });
           },
         );
+        break;
+      case CurrentScreenView.apps1:
+        _currentAppScreenWidget = Apps1Screen(
+          onBack: () {
+            setState(() {
+              _currentScreenView = CurrentScreenView.settings;
+              _updateCurrentScreenWidget();
+            });
+          },
+          onAppManagementTap: () {
+            setState(() {
+              _currentScreenView = CurrentScreenView.appManagement;
+              _updateCurrentScreenWidget();
+            });
+          },
+          backButtonKey: _apps1BackButtonKey,
+          appManagementKey: _appManagementKey,
+          defaultAppsKey: _defaultAppsKey,
+          disabledAppsKey: _disabledAppsKey,
+          recoverSystemAppsKey: _recoverSystemAppsKey,
+          autoLaunchKey: _autoLaunchKey,
+          specialAppAccessKey: _specialAppAccessKey,
+          appLockKey: _appLockKey,
+          dualAppsKey: _dualAppsKey,
+        );
+        break;
+      case CurrentScreenView.appManagement:
+        _currentAppScreenWidget = AppManagementScreen(
+            onBack: () {
+              setState(() {
+                _currentScreenView = CurrentScreenView.apps1;
+                _updateCurrentScreenWidget();
+              });
+            },
+            apps: widget.appGridKey.currentState?.getAllApps() ?? []);
         break;
     }
   }
@@ -622,17 +667,13 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               child: Material(
                 type: MaterialType.transparency,
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 800),
+                  duration: const Duration(milliseconds: 300),
                   transitionBuilder: (Widget child, Animation<double> animation) {
                     return FadeTransition(opacity: animation, child: child);
                   },
-                  // Using ValueKey with _currentScreenView to ensure AnimatedSwitcher detects change
-                  // when _currentAppScreenWidget instance might be the same type but different content (e.g. AppInfo for different apps)
-                  // or when the widget itself is entirely new.
-                  // The key here is on the child of AnimatedSwitcher.
                   child: KeyedSubtree(
-                    key: ValueKey<CurrentScreenView>(_currentScreenView), // Ensures switcher sees a change
-                    child: _currentAppScreenWidget
+                    key: ValueKey<CurrentScreenView>(_currentScreenView),
+                    child: _currentAppScreenWidget,
                   ),
                 ),
               ),
@@ -680,8 +721,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                       if (!mounted) return;
                       setState(() {
                         _isToastVisible = false;
-                        // Consider clearing _currentToastMessage = null; if it helps manage state,
-                        // but InternalToast should not be in tree if _isToastVisible is false.
                       });
                     },
                   ),

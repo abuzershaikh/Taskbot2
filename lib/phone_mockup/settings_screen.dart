@@ -53,29 +53,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.blueGrey[50],
-      appBar: AppBar(
-        title: const Text(
-          "Settings",
-          style: TextStyle(color: Colors.black),
+    return Material(
+      color: Colors.blueGrey[50],
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Scaffold is now transparent, Material provides color
+        appBar: AppBar(
+          title: const Text(
+            "Settings",
+            style: TextStyle(color: Colors.black),
+          ),
+          backgroundColor: Colors.transparent, // AppBar is also transparent
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: widget.onBack,
+          ),
         ),
-        backgroundColor: Colors.blueGrey[50],
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: widget.onBack,
+        body: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            _buildSettingsCard(context, primarySettingsData),
+            const SizedBox(height: 16),
+            _buildSettingsCard(context, displaySettingsData),
+            const SizedBox(height: 16),
+            _buildSettingsCard(context, appSecuritySettingsData),
+          ],
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildSettingsCard(context, primarySettingsData),
-          const SizedBox(height: 16),
-          _buildSettingsCard(context, displaySettingsData),
-          const SizedBox(height: 16),
-          _buildSettingsCard(context, appSecuritySettingsData),
-        ],
       ),
     );
   }
