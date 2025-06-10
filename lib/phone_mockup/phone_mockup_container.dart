@@ -80,7 +80,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   // --- CustomAppActionDialog Keys ---
   final GlobalKey<ClickableOutlineState> _appActionDialogAppInfoKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _appActionDialogUninstallKey = GlobalKey();
-  // final GlobalKey<ClickableOutlineState> _appActionDialogForceStopKey = GlobalKey(); // Not implemented in dialog
 
   // --- CustomClearDataDialog Keys ---
   final GlobalKey<ClickableOutlineState> _clearDataDialogCancelKey = GlobalKey();
@@ -106,39 +105,33 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   }
 
   void showSettingsScreen() {
-    print("PhoneMockupContainerState: showSettingsScreen() called.");
     setState(() {
       _currentScreenView = CurrentScreenView.settings;
-      print("PhoneMockupContainerState: _currentScreenView set to $_currentScreenView.");
       _currentAppDetails = null;
       _updateCurrentScreenWidget();
-      print("PhoneMockupContainerState: _updateCurrentScreenWidget() called from showSettingsScreen.");
     });
   }
 
   void showInternalToast(String message, {Duration duration = const Duration(seconds: 3)}) {
-    // Hides current toast immediately if one is visible, then shows new one after a brief delay.
     if (_isToastVisible) {
-      setState(() {
-        _isToastVisible = false;
-      });
-      // Allow old toast to be removed before showing the new one.
-      // This prevents visual glitches if the message/key changes too quickly for AnimatedSwitcher/FadeTransition.
+      setState(() => _isToastVisible = false);
       Future.delayed(const Duration(milliseconds: 50), () {
-        if (!mounted) return; // Guard against calling setState on unmounted widget
+        if (mounted) {
+          setState(() {
+            _currentToastMessage = message;
+            _toastDuration = duration;
+            _isToastVisible = true;
+          });
+        }
+      });
+    } else {
+      if (mounted) {
         setState(() {
           _currentToastMessage = message;
           _toastDuration = duration;
           _isToastVisible = true;
         });
-      });
-    } else {
-      if (!mounted) return; // Guard against calling setState on unmounted widget
-      setState(() {
-        _currentToastMessage = message;
-        _toastDuration = duration;
-        _isToastVisible = true;
-      });
+      }
     }
   }
 
@@ -153,11 +146,10 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     if (itemName == 'Settings') {
       setState(() {
         _currentScreenView = CurrentScreenView.settings;
-        _currentAppDetails = null; // Settings screen doesn't represent a single app's details
+        _currentAppDetails = null;
         _updateCurrentScreenWidget();
       });
     } else if (_currentScreenView == CurrentScreenView.settings) {
-      // If already on settings screen, handle settings item tap
       if (itemName == 'Apps') {
         setState(() {
           _currentScreenView = CurrentScreenView.apps1;
@@ -169,14 +161,11 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           _updateCurrentScreenWidget();
         });
       } else {
-        // For other settings items, print for now or handle as needed
         print('Settings item tapped: $itemName');
       }
     } else if (itemDetails != null) {
-      // This case is for app icons from the AppGrid
       navigateToAppInfo(appDetails: Map<String, String>.from(itemDetails));
     } else {
-      // Fallback for items that are not 'Settings' and don't have details (e.g., from AppGrid but details missing)
       final appDetails = widget.appGridKey.currentState?.getAppByName(itemName);
       if (appDetails != null && appDetails.isNotEmpty) {
         navigateToAppInfo(appDetails: Map<String, String>.from(appDetails));
@@ -196,8 +185,9 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     super.didUpdateWidget(oldWidget);
     if (widget.mockupWallpaperImage != oldWidget.mockupWallpaperImage &&
         _currentScreenView == CurrentScreenView.appGrid) {
-      _updateCurrentScreenWidget();
-      setState(() {});
+      setState(() {
+        _updateCurrentScreenWidget();
+      });
     }
   }
 
@@ -207,19 +197,13 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         _currentAppScreenWidget = AppGrid(
           key: widget.appGridKey,
           phoneMockupKey: widget.key as GlobalKey<PhoneMockupContainerState>,
-          wallpaperImage: widget.mockupWallpaperImage, // Corrected line
+          wallpaperImage: widget.mockupWallpaperImage,
           onAppTap: handleItemTap,
         );
         break;
       case CurrentScreenView.settings:
         _currentAppScreenWidget = SettingsScreen(
-          onBack: () {
-            setState(() {
-              _currentScreenView = CurrentScreenView.appGrid;
-              _currentAppDetails = null;
-              _updateCurrentScreenWidget();
-            });
-          },
+          onBack: () => navigateHome(),
           onSettingItemTap: handleItemTap,
         );
         break;
@@ -227,19 +211,10 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         if (_currentAppDetails != null) {
           _currentAppScreenWidget = AppInfoScreen(
             app: _currentAppDetails!,
-            onBack: () {
-              setState(() {
-                _currentScreenView = CurrentScreenView.appGrid;
-                _currentAppDetails = null;
-                _updateCurrentScreenWidget();
-              });
-            },
-            onNavigateToClearData: (appData) {
-              navigateToStorageUsage();
-            },
+            onBack: () => navigateHome(),
+            onNavigateToClearData: (appData) => navigateToStorageUsage(),
             showDialog: _showDialog,
             dismissDialog: dismissDialog,
-            // Pass all the keys to AppInfoScreen
             backButtonKey: _appInfoBackButtonKey,
             openButtonKey: _appInfoOpenButtonKey,
             storageCacheButtonKey: _appInfoStorageCacheButtonKey,
@@ -251,8 +226,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             uninstallButtonKey: _appInfoUninstallButtonKey,
           );
         } else {
-          _currentScreenView = CurrentScreenView.appGrid;
-          _updateCurrentScreenWidget();
+          navigateHome();
         }
         break;
       case CurrentScreenView.clearData:
@@ -278,20 +252,18 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             backButtonKey: _clearDataBackButtonKey,
             clearDataButtonKey: _clearDataClearDataButtonKey,
             clearCacheButtonKey: _clearDataClearCacheButtonKey,
-            // Pass dialog keys for CustomClearDataDialog shown by ClearDataScreen
             dialogCancelKey: _clearDataDialogCancelKey,
             dialogConfirmKey: _clearDataDialogConfirmKey,
           );
         } else {
-          _currentScreenView = CurrentScreenView.appGrid;
-          _updateCurrentScreenWidget();
+          navigateHome();
         }
         break;
       case CurrentScreenView.connectionSharing:
         _currentAppScreenWidget = ConnectionSharingScreen(
           onBack: () {
             setState(() {
-              _currentScreenView = CurrentScreenView.settings; // Navigate back to Settings
+              _currentScreenView = CurrentScreenView.settings;
               _updateCurrentScreenWidget();
             });
           },
@@ -345,7 +317,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       if (appDetails != null && appDetails.isNotEmpty) {
         handleAppLongPress(appDetails);
       } else {
-        // ignore: avoid_print
         print('PhoneMockupContainer: App for programmatic long press "$appName" not found.');
       }
     } else if (cmd.startsWith('tap ')) {
@@ -357,16 +328,18 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         await triggerAppInfoBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.clearData) {
         await triggerClearDataBackButtonAction();
-      } else if (_currentScreenView == CurrentScreenView.connectionSharing) {
+      } else if (_currentScreenView == CurrentScreenView.connectionSharing || _currentScreenView == CurrentScreenView.apps1) {
         setState(() {
           _currentScreenView = CurrentScreenView.settings;
           _updateCurrentScreenWidget();
         });
-      } else if (_currentScreenView == CurrentScreenView.settings) {
-         setState(() { // Settings back is simpler, no key needed for it yet.
-          _currentScreenView = CurrentScreenView.appGrid;
+      } else if (_currentScreenView == CurrentScreenView.appManagement) {
+        setState(() {
+          _currentScreenView = CurrentScreenView.apps1;
           _updateCurrentScreenWidget();
         });
+      } else if (_currentScreenView == CurrentScreenView.settings) {
+         navigateHome();
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -397,17 +370,10 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   }
 
   void _handleAppTap(String appName) {
-    // ignore: avoid_print
-    print('PhoneMockupContainer: App tapped: $appName');
-    // This method is now effectively replaced by handleItemTap, 
-    // but might still be called by _handleCommand.
-    // Consider refactoring _handleCommand to use handleItemTap directly.
     handleItemTap(appName); 
   }
 
   void handleAppLongPress(Map<String, String> app) {
-    // ignore: avoid_print
-    print('PhoneMockupContainer: User long press on app: ${app['name']}');
     _currentAppDetails = Map<String, String>.from(app);
     _showCustomAppActionDialog(_currentAppDetails!);
   }
@@ -418,7 +384,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       _activeDialog = CustomAppActionDialog(
         app: appDetails,
         onActionSelected: (actionName, appDetailsFromDialog) {
-          dismissDialog(); // This is important, dialog should be dismissed by its internal logic
+          dismissDialog();
           if (actionName == 'App info') {
             navigateToAppInfo(appDetails: appDetailsFromDialog);
           } else {
@@ -429,17 +395,14 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             }
           }
         },
-        // Pass keys for dialog elements
         appInfoKey: _appActionDialogAppInfoKey,
         uninstallKey: _appActionDialogUninstallKey,
-        // forceStopKey: _appActionDialogForceStopKey, // If it were implemented
       );
     });
   }
 
   void navigateToAppInfo({Map<String, String>? appDetails}) {
     final detailsToUse = appDetails ?? _currentAppDetails;
-
     if (detailsToUse != null) {
       if (_currentAppDetails != detailsToUse) {
          _currentAppDetails = detailsToUse;
@@ -447,11 +410,8 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       setState(() {
         _currentScreenView = CurrentScreenView.appInfo;
         _updateCurrentScreenWidget(); 
-        // ignore: avoid_print
-        print("PhoneMockupContainer: Navigated to AppInfo for ${detailsToUse['name']}");
       });
     } else {
-      // ignore: avoid_print
       print("PhoneMockupContainer: Error - AppDetails is null for navigateToAppInfo.");
     }
   }
@@ -461,20 +421,14 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       setState(() {
         _currentScreenView = CurrentScreenView.clearData;
         _updateCurrentScreenWidget(); 
-        // ignore: avoid_print
-        print("PhoneMockupContainer: Navigated to ClearDataScreen for ${_currentAppDetails!['name']}");
       });
     } else {
-      // ignore: avoid_print
       print("PhoneMockupContainer: Error - Not on AppInfo or _currentAppDetails is null for navigateToStorageUsage.");
     }
   }
 
   Future<void> _performActualDataClear(String appName) async {
-    // ignore: avoid_print
-    print("PhoneMockupContainer: Performing actual data clear for $appName");
     await widget.appGridKey.currentState?.updateAppDataSize(appName, '0 B', _currentAppDetails?['cacheSize'] ?? '0 B');
-
     if (_currentAppDetails != null && _currentAppDetails!['name'] == appName) {
       setState(() {
         _currentAppDetails!['dataSize'] = '0 B';
@@ -490,8 +444,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   }
 
   Future<void> _performActualCacheClear(String appName) async {
-    // ignore: avoid_print
-    print("PhoneMockupContainer: Performing actual cache clear for $appName");
     await widget.appGridKey.currentState?.updateAppDataSize(appName, _currentAppDetails?['dataSize'] ?? '0 B', '0 B');
 
     if (_currentAppDetails != null && _currentAppDetails!['name'] == appName) {
@@ -508,66 +460,19 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     }
   }
 
-  // --- Methods to trigger ClickableOutline actions ---
-  Future<void> triggerAppInfoStorageCacheAction() async {
-    await _appInfoStorageCacheButtonKey.currentState?.triggerOutlineAndAction();
-  }
-
-  Future<void> triggerAppInfoBackButtonAction() async {
-    await _appInfoBackButtonKey.currentState?.triggerOutlineAndAction();
-  }
-
-  Future<void> triggerClearDataButtonAction() async {
-    // This action in ClearDataScreen shows an AlertDialog, not CustomClearDataDialog.
-    // The requirement is to add keys to CustomClearDataDialog.
-    // So, this trigger is for the button on ClearDataScreen.
-    await _clearDataClearDataButtonKey.currentState?.triggerOutlineAndAction();
-  }
-
-  Future<void> triggerClearCacheButtonAction() async {
-    await _clearDataClearCacheButtonKey.currentState?.triggerOutlineAndAction();
-  }
-
-  Future<void> triggerClearDataBackButtonAction() async {
-    await _clearDataBackButtonKey.currentState?.triggerOutlineAndAction();
-  }
-
-  // Methods for Dialogs
-  Future<void> triggerDialogAppInfoAction() async {
-    await _appActionDialogAppInfoKey.currentState?.triggerOutlineAndAction();
-  }
-
-  Future<void> triggerDialogUninstallAction() async {
-    await _appActionDialogUninstallKey.currentState?.triggerOutlineAndAction();
-  }
-
-  // Force Stop is not in CustomAppActionDialog currently.
-  // Future<void> triggerDialogForceStopAction() async {
-  //   await _appActionDialogForceStopKey.currentState?.triggerOutlineAndAction();
-  // }
-
-  Future<void> triggerDialogClearDataConfirmAction() async {
-    await _clearDataDialogConfirmKey.currentState?.triggerOutlineAndAction();
-  }
-
-  Future<void> triggerDialogClearDataCancelAction() async {
-    await _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
-  }
-  // --- End Trigger Methods ---
-
+  Future<void> triggerAppInfoStorageCacheAction() async => await _appInfoStorageCacheButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerAppInfoBackButtonAction() async => await _appInfoBackButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerClearDataButtonAction() async => await _clearDataClearDataButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerClearCacheButtonAction() async => await _clearDataClearCacheButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerClearDataBackButtonAction() async => await _clearDataBackButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogAppInfoAction() async => await _appActionDialogAppInfoKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogUninstallAction() async => await _appActionDialogUninstallKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogClearDataConfirmAction() async => await _clearDataDialogConfirmKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogClearDataCancelAction() async => await _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
 
   void simulateClearDataClick() {
-    // This method is supposed to simulate clicking the "Clear Data" button
-    // which then shows a dialog. If the "Clear Data" button on ClearDataScreen
-    // shows the CustomClearDataDialog, then this method should trigger that.
-    // However, ClearDataScreen's "Clear Data" button shows a standard AlertDialog.
-    // CustomClearDataDialog was only used in the old simulateClearDataClick.
-    // For now, let's assume simulateClearDataClick is meant to show *CustomClearDataDialog*
-    // and make it use the new keys.
-    if (_currentAppDetails != null) { // No need to be on ClearData screen to simulate this.
+    if (_currentAppDetails != null) {
       final String appName = _currentAppDetails!['name']!;
-      // ignore: avoid_print
-      print("PhoneMockupContainer: simulateClearDataClick for $appName - showing CustomClearDataDialog with keys.");
       _showDialog(
         CustomClearDataDialog(
           title: 'Clear app data?',
@@ -579,31 +484,19 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             _performActualDataClear(appName);
           },
           onCancel: dismissDialog,
-          // Pass keys to CustomClearDataDialog
           cancelKey: _clearDataDialogCancelKey,
           confirmKey: _clearDataDialogConfirmKey,
         ),
       );
     } else {
-      // ignore: avoid_print
-      print("PhoneMockupContainer: Error - No app selected for simulateClearDataClick (CustomClearDataDialog).");
+      print("PhoneMockupContainer: Error - No app selected for simulateClearDataClick.");
     }
   }
 
-
   void simulateConfirmDelete() {
-    // This method is intended to confirm whatever dialog is currently active,
-    // assuming it's a confirmation dialog for deletion.
     if (_activeDialog != null && _currentAppDetails != null) {
-      // If the active dialog is our CustomClearDataDialog, we can trigger its confirm action.
-      // Otherwise, this simulation might be too generic.
-      // For now, assume it's for the CustomClearDataDialog if it's active.
-      // ignore: avoid_print
-      print("PhoneMockupContainer: Simulating confirm delete on active dialog.");
-      // We don't call dismissDialog() here because the dialog's own action should handle it.
       triggerDialogClearDataConfirmAction();
     } else {
-      // ignore: avoid_print
       print("PhoneMockupContainer: Error - No active dialog or no app details for simulateConfirmDelete.");
     }
   }
@@ -614,8 +507,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       _currentAppDetails = null;
       dismissDialog();
       _updateCurrentScreenWidget();
-      // ignore: avoid_print
-      print("PhoneMockupContainer: Navigated to Home (AppGrid).");
     });
   }
 
@@ -639,12 +530,9 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         decoration: const BoxDecoration(
           color: Colors.black,
         ),
-        child: InkWell(
-          splashColor: Colors.transparent,
-          onTap: () {},
-          child: Stack(
-            children: [
-              Positioned(
+        child: Stack(
+          children: [
+            Positioned(
               top: 0,
               left: 0,
               right: 0,
@@ -653,11 +541,11 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                 child: _buildStatusBar(),
               ),
             ),
-            Positioned(
+            const Positioned(
               top: 30,
               left: 0,
               right: 0,
-              child: const Divider(
+              child: Divider(
                 height: 1,
                 color: Colors.white30,
               ),
@@ -683,9 +571,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                 top: 31,
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.0),
-                  ),
+                  child: Container(color: Colors.black.withOpacity(0.0)),
                 ),
               ),
             if (_activeDialog != null)
@@ -697,39 +583,34 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                     color: Colors.black.withOpacity(0.5),
                     child: Center(
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () {}, // To prevent inner taps from closing the dialog
                         child: _activeDialog!,
                       ),
                     ),
                   ),
                 ),
               ),
-            
-            // --- Display InternalToast ---
             if (_isToastVisible && _currentToastMessage != null)
               Positioned(
-                bottom: 70.0, // Position from bottom, adjust as needed
-                left: 20.0,   // Padding from left
-                right: 20.0,  // Padding from right
-                child: Align( // Use Align to ensure it doesn't stretch if InternalToast has fixed width
+                bottom: 70.0,
+                left: 20.0,
+                right: 20.0,
+                child: Align(
                   alignment: Alignment.bottomCenter,
                   child: InternalToast(
-                    key: ValueKey<String?>(_currentToastMessage), // Ensures widget rebuilds on message change
+                    key: ValueKey<String?>(_currentToastMessage),
                     message: _currentToastMessage!,
                     visibleDuration: _toastDuration,
                     onDismissed: () {
-                      if (!mounted) return;
-                      setState(() {
-                        _isToastVisible = false;
-                      });
+                      if (mounted) {
+                        setState(() => _isToastVisible = false);
+                      }
                     },
                   ),
                 ),
               ),
-
             NotificationDrawer(key: _drawerKey),
           ],
-        ),
         ),
       ),
     );
@@ -737,7 +618,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
 
   Widget _buildStatusBar() {
     String formattedTime = DateFormat('h:mm a').format(DateTime.now());
-
     return Container(
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -751,24 +631,13 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           ),
           Row(
             children: const [
-              Icon(
-                Icons.signal_cellular_alt,
-                color: Colors.white,
-                size: 18,
-              ),
+              Icon(Icons.signal_cellular_alt, color: Colors.white, size: 18),
               SizedBox(width: 4),
               Icon(Icons.wifi, color: Colors.white, size: 18),
               SizedBox(width: 4),
-              Text(
-                "81%",
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
+              Text("81%", style: TextStyle(color: Colors.white, fontSize: 12)),
               SizedBox(width: 4),
-              Icon(
-                Icons.battery_full,
-                color: Colors.white,
-                size: 18,
-              ),
+              Icon(Icons.battery_full, color: Colors.white, size: 18),
             ],
           ),
         ],
