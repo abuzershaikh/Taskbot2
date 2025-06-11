@@ -8,6 +8,9 @@ import 'dart:async'; // For Timer (used in showInternalToast Future.delayed)
 
 import 'app_grid.dart';
 import 'settings_screen.dart';
+import 'system_settings.dart'; // Added import
+import 'reset_option.dart'; // Added import
+import 'reset_mobile_network_settings_screen.dart'; // Import screen
 import 'notification_drawer.dart';
 import 'custom_app_action_dialog.dart';
 import 'app_info_screen.dart';
@@ -29,7 +32,10 @@ enum CurrentScreenView {
   connectionSharing,
   apps1,
   appManagement,
-  systemApps // Add new screen view
+  systemApps, // Add new screen view
+  systemSettings, // Added for system settings screen
+  resetOptions,   // New
+  resetMobileNetworkSettings, // New value
 }
 
 typedef AppItemTapCallback = void Function(String itemName,
@@ -191,6 +197,11 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           _currentScreenView = CurrentScreenView.connectionSharing;
           _updateCurrentScreenWidget();
         });
+      } else if (itemName == 'System') { // New condition for System
+        setState(() {
+          _currentScreenView = CurrentScreenView.systemSettings;
+          _updateCurrentScreenWidget();
+        });
       } else {
         print('Settings item tapped: $itemName');
       }
@@ -347,6 +358,49 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           }, onAppSelected: (Map<String, String> app) => navigateToAppInfo(appDetails: app),
+        );
+        break;
+      case CurrentScreenView.systemSettings: // New case for SystemSettingsScreen
+        _currentAppScreenWidget = SystemSettingsScreen(
+          onBack: () {
+            setState(() {
+              _currentScreenView = CurrentScreenView.settings;
+              _updateCurrentScreenWidget();
+            });
+          },
+          onNavigateToResetOptions: () { // Actual navigation
+            setState(() {
+              _currentScreenView = CurrentScreenView.resetOptions;
+              _updateCurrentScreenWidget();
+            });
+          },
+        );
+        break;
+      case CurrentScreenView.resetOptions: // New case for ResetOptionScreen
+        _currentAppScreenWidget = ResetOptionScreen(
+          onBack: () {
+            setState(() {
+              _currentScreenView = CurrentScreenView.systemSettings; // Back to System Settings
+              _updateCurrentScreenWidget();
+            });
+          },
+          // Add this new callback prop
+          onNavigateToResetMobileNetwork: () {
+            setState(() {
+              _currentScreenView = CurrentScreenView.resetMobileNetworkSettings;
+              _updateCurrentScreenWidget();
+            });
+          },
+        );
+        break;
+      case CurrentScreenView.resetMobileNetworkSettings: // New case
+        _currentAppScreenWidget = ResetMobileNetworkSettingsScreen(
+          onBack: () {
+            setState(() {
+              _currentScreenView = CurrentScreenView.resetOptions; // Navigate back to ResetOptionScreen
+              _updateCurrentScreenWidget();
+            });
+          },
         );
         break;
     }

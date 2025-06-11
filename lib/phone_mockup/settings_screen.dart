@@ -128,7 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ClickableOutline(
                   key: itemKey!,
                   action: () async {
-                    if (widget.onSettingItemTap != null) {
+                    if (widget.onSettingItemTap != null) { // Removed direct navigation for 'System'
                       Map<String, String> stringItemDetails = {};
                       item.forEach((key, value) {
                         if (key != 'icon') {
@@ -174,7 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           )
                         : const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                     onTap: () {
-                      if (widget.onSettingItemTap != null) {
+                      if (widget.onSettingItemTap != null) { // Removed direct navigation for 'System'
                         Map<String, String> stringItemDetails = {};
                         item.forEach((key, value) {
                           if (key != 'icon') {

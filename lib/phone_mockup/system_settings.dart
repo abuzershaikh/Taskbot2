@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 
 class SystemSettingsScreen extends StatelessWidget {
   final VoidCallback onBack;
+  final VoidCallback onNavigateToResetOptions; // New parameter
 
-  const SystemSettingsScreen({super.key, required this.onBack});
+  const SystemSettingsScreen({
+    super.key,
+    required this.onBack,
+    required this.onNavigateToResetOptions, // New parameter
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +115,12 @@ class SystemSettingsScreen extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                // Handle tap
-                print('${item['title']} tapped');
+                if (item['title'] == 'Reset options') {
+                  onNavigateToResetOptions(); // Call the callback
+                } else {
+                  // Handle tap
+                  print('${item['title']} tapped');
+                }
               },
             );
           },

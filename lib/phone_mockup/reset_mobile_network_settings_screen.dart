@@ -1,10 +1,42 @@
 // lib/phone_mockup/reset_mobile_network_settings_screen.dart
 import 'package:flutter/material.dart';
 
-class ResetMobileNetworkSettingsScreen extends StatelessWidget {
+class ResetMobileNetworkSettingsScreen extends StatefulWidget {
   final VoidCallback onBack;
 
   const ResetMobileNetworkSettingsScreen({super.key, required this.onBack});
+
+  @override
+  State<ResetMobileNetworkSettingsScreen> createState() =>
+      _ResetMobileNetworkSettingsScreenState();
+}
+
+class _ResetMobileNetworkSettingsScreenState
+    extends State<ResetMobileNetworkSettingsScreen> {
+  bool _isConfirmationStep = false;
+
+  void _handleReset() {
+    if (!_isConfirmationStep) {
+      // First tap: move to confirmation step
+      setState(() {
+        _isConfirmationStep = true;
+      });
+    } else {
+      // Second tap: perform reset, show toast, and navigate back
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Network settings have been reset'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      // Wait for the SnackBar to be visible before navigating back
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          widget.onBack();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +47,7 @@ class ResetMobileNetworkSettingsScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: onBack,
+          onPressed: widget.onBack,
         ),
       ),
       body: Padding(
@@ -23,6 +55,7 @@ class ResetMobileNetworkSettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Title is always visible
             const Text(
               'Reset Mobile\nNetwork Settings',
               style: TextStyle(
@@ -32,27 +65,44 @@ class ResetMobileNetworkSettingsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'This will reset all mobile network settings',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black54,
+
+            // Conditional description text
+            if (!_isConfirmationStep)
+              const Text(
+                'This will reset all mobile network settings',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
               ),
-            ),
+
+            if (_isConfirmationStep)
+              const Text(
+                "Reset all network settings? You can't undo this action.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+
             const SizedBox(height: 32),
-            Center( // Center the button horizontally
+            Center(
               child: ElevatedButton(
-                onPressed: () {
-                  print('Reset settings button tapped');
-                },
+                onPressed: _handleReset,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple[50], // Light purple/blue color from image
-                  foregroundColor: Colors.deepPurple[700],
+                  // Change button color for confirmation step to match screenshot
+                  backgroundColor: _isConfirmationStep
+                      ? Colors.amber[300]
+                      : Colors.deepPurple[50],
+                  foregroundColor: _isConfirmationStep
+                      ? Colors.black87
+                      : Colors.deepPurple[700],
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
                 child: const Text(
                   'Reset settings',
