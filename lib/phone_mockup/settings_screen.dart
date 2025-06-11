@@ -9,7 +9,7 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.onBack, this.onSettingItemTap});
 
   @override
-  _SettingsScreenState createState() => _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 
   getSettingItemKey(String target) {}
 }
@@ -37,32 +37,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     {'icon': Icons.security_outlined, 'title': 'Password & security', 'trailing': null},
   ];
 
+  final List<Map<String, dynamic>> moreSettingsData = [
+    {'icon': Icons.health_and_safety_outlined, 'title': 'Safety & emergency', 'trailing': null},
+    {'icon': Icons.self_improvement_outlined, 'title': 'Digital Wellbeing & parental controls', 'trailing': null},
+    {'icon': Icons.integration_instructions_outlined, 'title': 'Google', 'trailing': null}, // Placeholder for Google 'G'
+    {'icon': Icons.system_update_alt, 'title': 'System updates', 'trailing': null},
+    {'icon': Icons.rate_review_outlined, 'title': 'Rating & feedback', 'trailing': null},
+    {'icon': Icons.help_outline, 'title': 'Help', 'trailing': null},
+    {'icon': Icons.info_outline, 'title': 'System', 'trailing': null},
+    {'icon': Icons.phone_android_outlined, 'title': 'About phone', 'trailing': null},
+  ];
+
+
   @override
   void initState() {
     super.initState();
-    for (var item in primarySettingsData) {
-      _settingsKeys[item['title'] as String] = GlobalKey<ClickableOutlineState>();
-    }
-    for (var item in displaySettingsData) {
-      _settingsKeys[item['title'] as String] = GlobalKey<ClickableOutlineState>();
-    }
-    for (var item in appSecuritySettingsData) {
+    _initializeKeysForList(primarySettingsData);
+    _initializeKeysForList(displaySettingsData);
+    _initializeKeysForList(appSecuritySettingsData);
+    _initializeKeysForList(moreSettingsData);
+  }
+
+  void _initializeKeysForList(List<Map<String, dynamic>> list) {
+    for (var item in list) {
       _settingsKeys[item['title'] as String] = GlobalKey<ClickableOutlineState>();
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.blueGrey[50],
       child: Scaffold(
-        backgroundColor: Colors.transparent, // Scaffold is now transparent, Material provides color
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const Text(
             "Settings",
             style: TextStyle(color: Colors.black),
           ),
-          backgroundColor: Colors.transparent, // AppBar is also transparent
+          backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -77,6 +91,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSettingsCard(context, displaySettingsData),
             const SizedBox(height: 16),
             _buildSettingsCard(context, appSecuritySettingsData),
+            const SizedBox(height: 16),
+            _buildSettingsCard(context, moreSettingsData),
           ],
         ),
       ),
@@ -97,6 +113,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             final itemTitle = item['title'] as String;
             final itemKey = _settingsKeys[itemTitle];
 
+            String? subtitle;
+            if (itemTitle == 'Safety & emergency') subtitle = 'Emergency, SOS, medical info, alerts';
+            if (itemTitle == 'Digital Wellbeing & parental controls') subtitle = 'Keep track of screen time';
+            if (itemTitle == 'Google') subtitle = 'Services & preferences';
+            if (itemTitle == 'System updates') subtitle = 'Update to the latest software';
+            if (itemTitle == 'Rating & feedback') subtitle = 'Send suggestions & rate your device';
+            if (itemTitle == 'Help') subtitle = 'Use phone, fix issues';
+            if (itemTitle == 'System') subtitle = 'Languages, time, backup';
+            if (itemTitle == 'About phone') subtitle = '';
+
             return Column(
               children: [
                 ClickableOutline(
@@ -105,9 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (widget.onSettingItemTap != null) {
                       Map<String, String> stringItemDetails = {};
                       item.forEach((key, value) {
-                        // Only add values that are already Strings or can be converted safely.
-                        // IconData should not be part of itemDetails if it expects String.
-                        if (key != 'icon') { // Exclude 'icon' from stringItemDetails
+                        if (key != 'icon') {
                           stringItemDetails[key] = value.toString();
                         }
                       });
@@ -117,14 +141,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     }
                   },
                   child: ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(item['icon'] as IconData, color: Colors.blue[700]),
-                    ),
+                    dense: true,
+                    horizontalTitleGap: 12.0,
+                    leading: Icon(item['icon'] as IconData, color: Colors.black54, size: 24),
                     title: Text(
                       itemTitle,
                       style: const TextStyle(
@@ -133,6 +152,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    subtitle: subtitle != null
+                        ? Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: Colors.grey[600]),
+                          )
+                        : null,
                     trailing: item['trailing'] != null
                         ? Row(
                             mainAxisSize: MainAxisSize.min,
@@ -141,6 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 item['trailing'] as String,
                                 style: const TextStyle(color: Colors.grey, fontSize: 14),
                               ),
+                              const SizedBox(width: 4),
                               const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                             ],
                           )
@@ -149,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (widget.onSettingItemTap != null) {
                         Map<String, String> stringItemDetails = {};
                         item.forEach((key, value) {
-                          if (key != 'icon') { // Exclude 'icon' from stringItemDetails
+                          if (key != 'icon') {
                             stringItemDetails[key] = value.toString();
                           }
                         });
@@ -162,7 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 if (item != items.last)
                   const Divider(
-                    indent: 72,
+                    indent: 56,
                     endIndent: 16,
                     height: 1,
                     color: Colors.black12,
