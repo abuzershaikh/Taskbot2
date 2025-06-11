@@ -106,13 +106,13 @@ class _Apps1ScreenState extends State<Apps1Screen> {
           children: items.map((item) {
             final itemTitle = item['title'] as String;
             final itemKey = item['key'] as GlobalKey<ClickableOutlineState>;
-            final VoidCallback onTapAction = () {
+            onTapAction() {
               if (itemTitle == 'App management') {
                 widget.onAppManagementTap();
               } else {
                 print('Tapped on $itemTitle');
               }
-            };
+            }
 
             return Column(
               children: [

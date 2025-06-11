@@ -1,15 +1,21 @@
-// File: lib/phone_mockup/app_management_screen.dart
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+// AppInfoScreen ka import ab yahan zaroori nahi hai.
 
 class AppManagementScreen extends StatefulWidget {
   final VoidCallback onBack;
-  final List<Map<String, String>> apps; // List of apps from AppGrid
+  final VoidCallback onNavigateToSystemApps;
+  // Naya callback function, jo app select hone par call hoga.
+  final void Function(Map<String, String> app) onAppSelected;
 
   const AppManagementScreen({
     super.key,
     required this.onBack,
-    required this.apps,
+    required this.onNavigateToSystemApps,
+    required this.onAppSelected, // Constructor mein add karein.
   });
 
   @override
@@ -18,51 +24,79 @@ class AppManagementScreen extends StatefulWidget {
 
 class _AppManagementScreenState extends State<AppManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
+  List<Map<String, String>> _allApps = [];
+  List<Map<String, String>> _filteredApps = [];
+  bool _isLoading = true;
+  final _random = Random();
 
   @override
   void initState() {
     super.initState();
-    // Add a listener to rebuild the widget when the search query changes,
-    // so _getFilteredApps can re-evaluate.
-    _searchController.addListener(() {
-      setState(() {});
-    });
+    _loadAppsFromAssets();
+    _searchController.addListener(_filterApps);
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(() {
-      setState(() {}); // Remove listener before disposing
-    });
+    _searchController.removeListener(_filterApps);
     _searchController.dispose();
     super.dispose();
   }
 
-  // This method dynamically computes the filtered list based on the current
-  // widget.apps (which is updated by PhoneMockupContainer) and the search query.
-  List<Map<String, String>> _getFilteredApps() {
+  Future<void> _loadAppsFromAssets() async {
+    try {
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      final List<Map<String, String>> loadedIcons = [];
+      for (var assetPath in manifestMap.keys) {
+        if (assetPath.startsWith('assets/icons/')) {
+          String fileName = assetPath.substring('assets/icons/'.length);
+          String appName = fileName.split('.').first;
+
+          // AppInfoScreen ke liye zaroori data add karein.
+          loadedIcons.add({
+            'name': appName,
+            'icon': assetPath,
+            'version': '1.${_random.nextInt(12)}.${_random.nextInt(20)}',
+            'totalSize': '${20 + _random.nextInt(250)} MB',
+          });
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _allApps = loadedIcons;
+          _filteredApps = _allApps;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading app icons from assets: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _filterApps() {
     final query = _searchController.text.toLowerCase();
-    if (query.isEmpty) {
-      return widget.apps;
-    } else {
-      return widget.apps.where((app) {
+    setState(() {
+      _filteredApps = _allApps.where((app) {
         final appName = app['name']?.toLowerCase() ?? '';
         return appName.contains(query);
       }).toList();
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredApps = _getFilteredApps(); // Get the filtered list on each build
-
     return Scaffold(
       backgroundColor: Colors.blueGrey[50],
       appBar: AppBar(
-        title: const Text(
-          "App management",
-          style: TextStyle(color: Colors.black),
-        ),
+        title: const Text("App management", style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.blueGrey[50],
         elevation: 0,
         leading: IconButton(
@@ -70,11 +104,19 @@ class _AppManagementScreenState extends State<AppManagementScreen> {
           onPressed: widget.onBack,
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {
-              // Handle more options
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'show_system_apps') {
+                widget.onNavigateToSystemApps();
+              }
             },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'show_system_apps',
+                child: Text('Show system apps'),
+              ),
+            ],
+            icon: const Icon(Icons.more_vert, color: Colors.black),
           ),
         ],
       ),
@@ -85,7 +127,7 @@ class _AppManagementScreenState extends State<AppManagementScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search ${widget.apps.length} items', // Dynamic count based on total apps
+                hintText: 'Search ${_allApps.length} items',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
@@ -98,64 +140,40 @@ class _AppManagementScreenState extends State<AppManagementScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredApps.length,
-              itemBuilder: (context, index) {
-                final app = filteredApps[index];
-                final appName = app['name']!;
-                final iconPath = app['icon']!;
-
-                Widget iconWidget;
-                if (iconPath.startsWith('assets/')) {
-                  iconWidget = Image.asset(
-                    iconPath,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.broken_image, size: 40);
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: _filteredApps.length,
+                    itemBuilder: (context, index) {
+                      final app = _filteredApps[index];
+                      return Column(
+                        children: [
+                          ListTile(
+                            leading: Image.asset(
+                              app['icon']!,
+                              width: 40, height: 40, fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.broken_image, size: 40);
+                              },
+                            ),
+                            title: Text(
+                              app['name']!,
+                              style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            ),
+                            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                            onTap: () {
+                              // Parent widget ko batayein ki app select ho gaya hai.
+                              widget.onAppSelected(app);
+                            },
+                          ),
+                          if (index < _filteredApps.length - 1)
+                            const Divider(
+                              indent: 72, endIndent: 16, height: 1, color: Colors.black12,
+                            ),
+                        ],
+                      );
                     },
-                  );
-                } else {
-                  iconWidget = Image.file(
-                    File(iconPath),
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.broken_image, size: 40);
-                    },
-                  );
-                }
-
-                return Column(
-                  children: [
-                    ListTile(
-                      leading: iconWidget,
-                      title: Text(
-                        appName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                      onTap: () {
-                        // Handle app item tap, e.g., navigate to app info
-                        print('Tapped on app: $appName');
-                      },
-                    ),
-                    if (index < filteredApps.length - 1)
-                      const Divider(
-                        indent: 72, // Aligns with the title text
-                        endIndent: 16,
-                        height: 1,
-                        color: Colors.black12,
-                      ),
-                  ],
-                );
-              },
-            ),
+                  ),
           ),
         ],
       ),
