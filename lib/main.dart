@@ -258,6 +258,7 @@ class _MyAppState extends State<MyApp> {
             // Tool Drawer Toggle Button
             Positioned(
               right: 20,
+              
               top: screenHeight / 2 - 25,
               child: FloatingActionButton(
                 onPressed: _toggleToolDrawer,
