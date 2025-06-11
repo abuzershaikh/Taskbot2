@@ -43,6 +43,27 @@ class _AppManagementScreenState extends State<AppManagementScreen> {
     super.dispose();
   }
 
+  String _generateRandomAppSize() {
+    final random = Random();
+    final units = ['KB', 'MB', 'GB'];
+    String unit = units[random.nextInt(units.length)];
+    double size;
+
+    if (unit == 'KB') {
+      size = (random.nextInt(900) + 100).toDouble(); // 100-999 KB
+      return '${size.toInt()} KB';
+    } else if (unit == 'MB') {
+      size = random.nextDouble() * 500 + 1; // 1.0 - 500.9 MB
+      if (random.nextBool()) { // Occasionally make it a whole number
+          return '${size.toInt()} MB';
+      }
+      return '${size.toStringAsFixed(1)} MB';
+    } else { // GB
+      size = random.nextDouble() * 5 + 0.5; // 0.5 - 5.4 GB
+      return '${size.toStringAsFixed(1)} GB';
+    }
+  }
+
   Future<void> _loadAppsFromAssets() async {
     try {
       final manifestContent = await rootBundle.loadString('AssetManifest.json');
@@ -59,7 +80,7 @@ class _AppManagementScreenState extends State<AppManagementScreen> {
             'name': appName,
             'icon': assetPath,
             'version': '1.${_random.nextInt(12)}.${_random.nextInt(20)}',
-            'totalSize': '${20 + _random.nextInt(250)} MB',
+            'totalSize': _generateRandomAppSize(),
           });
         }
       }

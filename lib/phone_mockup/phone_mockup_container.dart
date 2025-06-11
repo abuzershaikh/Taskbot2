@@ -336,7 +336,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                 _updateCurrentScreenWidget();
               });
             },
-            onNavigateToSystemApps: showSystemAppsScreen, onAppSelected: (Map<String, String> app) {  },);
+            onNavigateToSystemApps: showSystemAppsScreen, onAppSelected: (Map<String, String> app) => navigateToAppInfo(appDetails: app),);
         break;
       // Case for the new system apps screen
       case CurrentScreenView.systemApps:
@@ -346,7 +346,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _currentScreenView = CurrentScreenView.appManagement;
               _updateCurrentScreenWidget();
             });
-          }, onAppSelected: (Map<String, String> app) {  },
+          }, onAppSelected: (Map<String, String> app) => navigateToAppInfo(appDetails: app),
         );
         break;
     }

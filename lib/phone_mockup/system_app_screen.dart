@@ -40,6 +40,27 @@ class _SystemAppScreenState extends State<SystemAppScreen> {
     super.dispose();
   }
 
+  String _generateRandomAppSize() {
+    // Use the existing _random instance
+    final units = ['KB', 'MB', 'GB'];
+    String unit = units[_random.nextInt(units.length)];
+    double size;
+
+    if (unit == 'KB') {
+      size = (_random.nextInt(900) + 100).toDouble(); // 100-999 KB
+      return '${size.toInt()} KB';
+    } else if (unit == 'MB') {
+      size = _random.nextDouble() * 500 + 1; // 1.0 - 500.9 MB
+      if (_random.nextBool()) { // Occasionally make it a whole number
+          return '${size.toInt()} MB';
+      }
+      return '${size.toStringAsFixed(1)} MB';
+    } else { // GB
+      size = _random.nextDouble() * 5 + 0.5; // 0.5 - 5.4 GB
+      return '${size.toStringAsFixed(1)} GB';
+    }
+  }
+
   Future<void> _loadSystemIcons() async {
     try {
       final manifestContent =
@@ -62,7 +83,7 @@ class _SystemAppScreenState extends State<SystemAppScreen> {
             'name': namePart,
             'icon': key,
             'version': '9.${_random.nextInt(5)}.${_random.nextInt(10)}',
-            'totalSize': '${10 + _random.nextInt(150)} MB',
+            'totalSize': _generateRandomAppSize(),
           });
         }
       }
