@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ConnectionSharingScreen extends StatefulWidget {
   final VoidCallback onBack;
 
-  const ConnectionSharingScreen({super.key, required this.onBack});
+  const ConnectionSharingScreen({super.key, required this.onBack, required void Function(String message, {Duration duration}) showInternalToast});
 
   @override
   State<ConnectionSharingScreen> createState() => _ConnectionSharingScreenState();

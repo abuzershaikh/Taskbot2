@@ -312,6 +312,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
+          showInternalToast: showInternalToast, 
         );
         break;
       case CurrentScreenView.apps1:
@@ -403,6 +404,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
+          showInternalToast: showInternalToast,
         );
         break;
     }

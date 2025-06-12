@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 
 class ResetMobileNetworkSettingsScreen extends StatefulWidget {
   final VoidCallback onBack;
+  final void Function(String message, {Duration duration}) showInternalToast;
 
-  const ResetMobileNetworkSettingsScreen({super.key, required this.onBack});
+  const ResetMobileNetworkSettingsScreen({
+    super.key,
+    required this.onBack,
+    required this.showInternalToast,
+  });
 
   @override
   State<ResetMobileNetworkSettingsScreen> createState() =>
@@ -23,11 +28,9 @@ class _ResetMobileNetworkSettingsScreenState
       });
     } else {
       // Second tap: perform reset, show toast, and navigate back
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Network settings have been reset'),
-          duration: Duration(seconds: 2),
-        ),
+      widget.showInternalToast(
+        'Network settings have been reset',
+        duration: const Duration(seconds: 2),
       );
       // Wait for the SnackBar to be visible before navigating back
       Future.delayed(const Duration(seconds: 2), () {
