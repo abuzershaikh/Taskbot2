@@ -131,34 +131,35 @@ class NotificationDrawerState extends State<NotificationDrawer> {
               : Colors.transparent,
           child: Column(
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(20.0),
-                  bottomRight: Radius.circular(20.0),
-                ),
-                child: Container(
-                  width: double.infinity,
-                  color: const Color(0xFFF0F0F0),
-                  height: _drawerHeight > _closedHeight ? _drawerHeight : 0,
-                  child: SingleChildScrollView(
-                    physics: _drawerHeight >= phoneMockupHeight * _halfOpenHeightFraction
-                        ? const AlwaysScrollableScrollPhysics()
-                        : const NeverScrollableScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Column(
-                        children: [
-                          _buildTopBar(),
-                          const SizedBox(height: 16),
-                          _buildLargeButtons(),
-                          const SizedBox(height: 24),
-                          _buildQuickSettingsGrid(),
-                          const SizedBox(height: 24),
-                          _buildBrightnessControl(),
-                          const SizedBox(height: 16),
-                          _buildBottomButtons(),
-                          const SizedBox(height: 20),
-                        ],
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(20.0),
+                    bottomRight: Radius.circular(20.0),
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    color: const Color(0xFFF0F0F0),
+                    child: SingleChildScrollView(
+                      physics: _drawerHeight >= phoneMockupHeight * _halfOpenHeightFraction
+                          ? const AlwaysScrollableScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Column(
+                          children: [
+                            _buildTopBar(),
+                            const SizedBox(height: 16),
+                            _buildLargeButtons(),
+                            const SizedBox(height: 24),
+                            _buildQuickSettingsGrid(),
+                            const SizedBox(height: 24),
+                            _buildBrightnessControl(),
+                            const SizedBox(height: 16),
+                            _buildBottomButtons(),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
                   ),
