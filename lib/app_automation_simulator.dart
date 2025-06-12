@@ -60,8 +60,9 @@ class AppAutomationSimulator {
       return false;
     }
     await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await appOutlineKey.currentState!.triggerOutlineAndAction();
-    // The 5-second delay is now part of triggerOutlineAndAction.
+    // Removed await
+    appOutlineKey.currentState!.triggerOutlineAndAction();
+    // The 500ms delay for outline visibility is in triggerOutlineAndAction.
     // The action itself (handleAppLongPress) shows the dialog.
     print("Long press action triggered for $appName. Waiting for dialog.");
     await Future.delayed(const Duration(milliseconds: 700)); // Wait for dialog to build/appear after action.
@@ -73,8 +74,9 @@ class AppAutomationSimulator {
       return false;
     }
     await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerDialogAppInfoAction();
-    // triggerDialogAppInfoAction includes the outline delay and performs navigation.
+    // Removed await
+    phoneMockupState.triggerDialogAppInfoAction();
+    // triggerDialogAppInfoAction includes the outline delay (500ms) and performs navigation.
     print("'App info' action triggered. Waiting for navigation to App Info screen.");
     await Future.delayed(const Duration(milliseconds: 300)); // Short delay for screen transition.
 
@@ -90,8 +92,9 @@ class AppAutomationSimulator {
       return false;
     }
     await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerAppInfoStorageCacheAction();
-    // triggerAppInfoStorageCacheAction includes outline delay and navigates to ClearDataScreen.
+    // Removed await
+    phoneMockupState.triggerAppInfoStorageCacheAction();
+    // triggerAppInfoStorageCacheAction includes outline delay (500ms) and navigates to ClearDataScreen.
     print("'Storage & cache' action triggered. Waiting for navigation to Clear Data screen.");
     await Future.delayed(const Duration(milliseconds: 300)); // Short delay for screen transition.
 
@@ -107,8 +110,9 @@ class AppAutomationSimulator {
       return false;
     }
     await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerClearDataButtonAction();
-    // triggerClearDataButtonAction includes outline delay and its action shows the confirmation dialog.
+    // Removed await
+    phoneMockupState.triggerClearDataButtonAction();
+    // triggerClearDataButtonAction includes outline delay (500ms) and its action shows the confirmation dialog.
     print("'Clear Data' action triggered. Waiting for confirmation dialog.");
     await Future.delayed(const Duration(milliseconds: 700)); // Wait for dialog to build/appear.
 
@@ -119,8 +123,9 @@ class AppAutomationSimulator {
       return false;
     }
     await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerDialogClearDataConfirmAction();
-    // triggerDialogClearDataConfirmAction includes outline delay and performs data clear + dialog dismissal.
+    // Removed await
+    phoneMockupState.triggerDialogClearDataConfirmAction();
+    // triggerDialogClearDataConfirmAction includes outline delay (500ms) and performs data clear + dialog dismissal.
     print("'Delete' action triggered. Waiting for dialog dismissal and data clear operation.");
     await Future.delayed(const Duration(milliseconds: 500)); // Short delay for action to complete.
 
@@ -212,14 +217,21 @@ class AppAutomationSimulator {
     await Future.delayed(preLongPressDelay);
 
     print("Simulating long press on $appName via ClickableOutline.");
-    await appOutlineKey.currentState!.triggerOutlineAndAction(); // This includes a 5-second outline display
+    // Removed await
+    appOutlineKey.currentState!.triggerOutlineAndAction(); // This includes a 500ms outline display internally
 
     // Step 5: Implement additional wait to meet 5-8 seconds total after long press trigger
-    // triggerOutlineAndAction has a 5-second delay. We need 0-3 seconds more.
-    final additionalWaitMillis = _random.nextInt(3001); // 0ms to 3000ms
-    final totalWaitDuration = Duration(seconds: 5) + Duration(milliseconds: additionalWaitMillis);
-    print("Long press action triggered. Internal outline delay is 5s. Adding ${additionalWaitMillis}ms. Total wait: ${totalWaitDuration.inMilliseconds}ms.");
-    await Future.delayed(Duration(milliseconds: additionalWaitMillis)); 
+    // triggerOutlineAndAction has a 500ms delay. We need 4.5-7.5 seconds more to meet the original 5-8s total.
+    // Let's adjust the logic here slightly. The original comment said "5-second outline display"
+    // which seems to be a misunderstanding of the ClickableOutline's behavior (it's 500ms).
+    // The important part is the total wait. If the *action* of long press takes time to register
+    // or the dialog takes time to appear, that's what matters.
+    // The previous code was: 5s (from await appOutlineKey...) + additionalWaitMillis (0-3s) = 5-8s.
+    // Now it's: 500ms (internal to triggerOutlineAndAction) + additionalWaitMillis.
+    // To keep the total roughly the same (simulating the time until dialog is actionable):
+    final additionalWaitMillis = _random.nextInt(3001) + 4500; // 4500ms to 7500ms
+    print("Long press action triggered (outline shown for 500ms). Adding ${additionalWaitMillis}ms for dialog appearance and user reaction. Total wait: ${500 + additionalWaitMillis}ms.");
+    await Future.delayed(Duration(milliseconds: additionalWaitMillis));
     print("Finished waiting after long press. Dialog should be visible.");
 
     // Step 6: Simulate selecting "App info" in the dialog
@@ -232,7 +244,8 @@ class AppAutomationSimulator {
       print("Error: PhoneMockupContainerState is not mounted. Cannot trigger dialog action.");
       return false;
     }
-    await phoneMockupState.triggerDialogAppInfoAction();
+    // Removed await
+    phoneMockupState.triggerDialogAppInfoAction();
     print("'App info' action triggered. Waiting for navigation to App Info screen.");
     await Future.delayed(const Duration(milliseconds: 300)); // Short delay for screen transition.
 
@@ -271,7 +284,8 @@ class AppAutomationSimulator {
       print("Error: PhoneMockupContainerState is not mounted. Cannot trigger 'Storage & cache' action.");
       return false;
     }
-    await phoneMockupState.triggerAppInfoStorageCacheAction();
+    // Removed await
+    phoneMockupState.triggerAppInfoStorageCacheAction();
     print("'Storage & cache' action triggered. Waiting for navigation to Clear Data screen.");
     await Future.delayed(const Duration(milliseconds: 300)); // Short delay for screen transition.
 
@@ -290,7 +304,8 @@ class AppAutomationSimulator {
       print("Error: PhoneMockupContainerState is not mounted. Cannot trigger 'Clear Data' action.");
       return false;
     }
-    await phoneMockupState.triggerClearDataButtonAction();
+    // Removed await
+    phoneMockupState.triggerClearDataButtonAction();
     print("'Clear Data' action triggered. Waiting for confirmation dialog.");
     await Future.delayed(const Duration(milliseconds: 700)); // Wait for dialog to build/appear.
 
@@ -304,7 +319,8 @@ class AppAutomationSimulator {
       print("Error: PhoneMockupContainerState is not mounted. Cannot trigger dialog 'Delete' action.");
       return false;
     }
-    await phoneMockupState.triggerDialogClearDataConfirmAction();
+    // Removed await
+    phoneMockupState.triggerDialogClearDataConfirmAction();
     print("'Delete' action triggered. Waiting for dialog dismissal and data clear operation.");
     await Future.delayed(const Duration(milliseconds: 500)); // Short delay for action to complete.
 
@@ -380,7 +396,8 @@ class AppAutomationSimulator {
         return false;
     }
     // Assuming triggerSettingsSystemAction() exists and handles the tap + navigation
-    await phoneMockupState.triggerSettingsSystemAction(); 
+    // Removed await
+    phoneMockupState.triggerSettingsSystemAction();
     print("'System' tapped. Waiting for screen transition.");
     await Future.delayed(const Duration(milliseconds: 300)); // Screen transition delay
 
@@ -405,7 +422,8 @@ class AppAutomationSimulator {
         return false;
     }
     // Assuming triggerSystemResetOptionsAction() exists and handles the tap + navigation
-    await phoneMockupState.triggerSystemResetOptionsAction();
+    // Removed await
+    phoneMockupState.triggerSystemResetOptionsAction();
     print("'Reset options' tapped. Waiting for screen transition.");
     await Future.delayed(const Duration(milliseconds: 300)); // Screen transition delay
 
@@ -438,7 +456,8 @@ class AppAutomationSimulator {
 
     print("Simulating tap on 'Reset Mobile Network Settings'.");
     // Assuming triggerResetMobileNetworkSettingsAction() exists
-    await phoneMockupState.triggerResetMobileNetworkSettingsAction(); 
+    // Removed await
+    phoneMockupState.triggerResetMobileNetworkSettingsAction();
     print("'Reset Mobile Network Settings' tapped. Waiting for screen/dialog transition.");
     await Future.delayed(const Duration(milliseconds: 500)); // Screen/dialog transition
 
@@ -454,7 +473,8 @@ class AppAutomationSimulator {
 
     print("Simulating tap on 'Reset Settings' (first confirmation).");
     // Assuming triggerConfirmResetNetworkAction() exists
-    await phoneMockupState.triggerConfirmResetNetworkAction();
+    // Removed await
+    phoneMockupState.triggerConfirmResetNetworkAction();
     print("First 'Reset Settings' tapped. Waiting for action processing.");
     await Future.delayed(const Duration(milliseconds: 500)); // Action processing
 
@@ -470,7 +490,8 @@ class AppAutomationSimulator {
     
     print("Simulating tap on 'Reset Settings' (final confirmation).");
     // Assuming triggerFinalConfirmResetNetworkAction() exists
-    await phoneMockupState.triggerFinalConfirmResetNetworkAction();
+    // Removed await
+    phoneMockupState.triggerFinalConfirmResetNetworkAction();
     print("Final 'Reset Settings' tapped. Network reset processing...");
     await Future.delayed(const Duration(seconds: 1)); // Action processing (might take longer)
 

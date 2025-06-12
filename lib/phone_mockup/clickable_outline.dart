@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 
 class ClickableOutline extends StatefulWidget {
   final Widget child;
-  final Future<void> Function() action;
+  final VoidCallback action;
 
   const ClickableOutline({
-    required GlobalKey<ClickableOutlineState> key, // Key is passed here
+    Key? key,
     required this.child,
     required this.action,
   }) : super(key: key);
@@ -16,73 +15,41 @@ class ClickableOutline extends StatefulWidget {
 }
 
 class ClickableOutlineState extends State<ClickableOutline> {
-  OverlayEntry? _overlayEntry;
-  bool _isStateMounted = false;
+  bool _isOutlined = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _isStateMounted = true;
-  }
-
-  @override
-  void dispose() {
-    _isStateMounted = false;
-    _removeOutline();
-    super.dispose();
-  }
-
-  Future<void> triggerOutlineAndAction() async {
-    if (!_isStateMounted) return;
-
-    _showOutline();
-    await Future.delayed(const Duration(seconds: 5));
-
-    if (_isStateMounted) {
-      _removeOutline();
-      await widget.action();
-    }
-  }
-
-  void _showOutline() {
-    // Ensure previous outline is removed if any
-    _removeOutline();
-
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null || !renderBox.hasSize) return;
-
-    final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: offset.dx,
-        top: offset.dy,
-        width: size.width,
-        height: size.height,
-        child: IgnorePointer( // Makes the outline non-interactive
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.red, width: 3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  void _removeOutline() {
-    if (_overlayEntry != null) {
-      _overlayEntry!.remove();
-      _overlayEntry = null;
-    }
+  void triggerOutlineAndAction() {
+    setState(() {
+      _isOutlined = true;
+    });
+    widget.action();
+    // Automatically dismiss the outline after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _isOutlined = false;
+        });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return GestureDetector(
+      onTap: widget.action,
+      child: Stack(
+        children: [
+          widget.child,
+          if (_isOutlined)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue, width: 2.0),
+                  borderRadius: BorderRadius.circular(4.0), // Optional: for rounded corners
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

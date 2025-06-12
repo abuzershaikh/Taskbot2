@@ -2,14 +2,18 @@
 
 import 'package:flutter/material.dart';
 
+import 'package:taskbot2/phone_mockup/clickable_outline.dart';
+
 class SystemSettingsScreen extends StatelessWidget {
   final VoidCallback onBack;
-  final VoidCallback onNavigateToResetOptions; // New parameter
+  final VoidCallback onNavigateToResetOptions;
+  final GlobalKey<ClickableOutlineState>? resetOptionsKey;
 
   const SystemSettingsScreen({
     super.key,
     required this.onBack,
-    required this.onNavigateToResetOptions, // New parameter
+    required this.onNavigateToResetOptions,
+    this.resetOptionsKey,
   });
 
   @override
@@ -92,6 +96,36 @@ class SystemSettingsScreen extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final item = systemSettingsItems[index];
+            if (item['title'] == 'Reset options') {
+              return ClickableOutline(
+                key: resetOptionsKey,
+                action: onNavigateToResetOptions,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0), // Padding for each item
+                  leading: Icon(
+                    item['icon'] as IconData,
+                    color: Colors.black54,
+                  ),
+                  title: Text(
+                    item['title'] as String,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  subtitle: Text(
+                    item['subtitle'] as String,
+                    maxLines: 2, // Allow up to 2 lines for subtitle
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  onTap: onNavigateToResetOptions, // Keep onTap for direct interaction, ClickableOutline is for external trigger
+                ),
+              );
+            }
             return ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0), // Padding for each item
               leading: Icon(
@@ -115,12 +149,8 @@ class SystemSettingsScreen extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                if (item['title'] == 'Reset options') {
-                  onNavigateToResetOptions(); // Call the callback
-                } else {
-                  // Handle tap
-                  print('${item['title']} tapped');
-                }
+                // Handle tap for other items
+                print('${item['title']} tapped');
               },
             );
           },

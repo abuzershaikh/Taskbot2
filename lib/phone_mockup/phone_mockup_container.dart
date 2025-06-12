@@ -131,6 +131,16 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   final GlobalKey<ClickableOutlineState> _appLockKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _dualAppsKey = GlobalKey();
 
+  // --- SystemSettingsScreen Keys ---
+  final GlobalKey<ClickableOutlineState> _systemSettingsResetOptionsKey = GlobalKey();
+
+  // --- ResetOptionScreen Keys ---
+  final GlobalKey<ClickableOutlineState> _resetMobileNetworkKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _resetBluetoothWifiKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _resetAppPreferencesKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _eraseAllDataKey = GlobalKey();
+
+
   void dismissDialog() {
     setState(() {
       _activeDialog = null;
@@ -381,6 +391,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
+          resetOptionsKey: _systemSettingsResetOptionsKey,
         );
         break;
       case CurrentScreenView.resetOptions: // New case for ResetOptionScreen
@@ -400,6 +411,10 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           showMockupDialog: _showDialog, // Pass the _showDialog method
           showMockupToast: showInternalToast, // Pass the showInternalToast method
           dismissMockupDialog: dismissDialog, // Pass the dismissDialog method
+          resetMobileNetworkKey: _resetMobileNetworkKey,
+          resetBluetoothWifiKey: _resetBluetoothWifiKey,
+          resetAppPreferencesKey: _resetAppPreferencesKey,
+          eraseAllDataKey: _eraseAllDataKey,
         );
         break;
       case CurrentScreenView.resetMobileNetworkSettings: // New case
@@ -430,14 +445,31 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             'PhoneMockupContainer: App for programmatic long press "$appName" not found.');
       }
     } else if (cmd.startsWith('tap ')) {
-      final appName = cmd.substring('tap '.length).trim();
-      _handleAppTap(appName);
+      final itemName = cmd.substring('tap '.length).trim();
+      // Check if it's a settings item first
+      if (_currentScreenView == CurrentScreenView.systemSettings && itemName == 'reset options') {
+        triggerSystemResetOptionsOutline();
+      } else if (_currentScreenView == CurrentScreenView.resetOptions) {
+        if (itemName == 'reset mobile network settings') {
+          triggerResetMobileNetworkOutline();
+        } else if (itemName == 'reset bluetooth & wi-fi') {
+          triggerResetBluetoothWifiOutline();
+        } else if (itemName == 'reset app preferences') {
+          triggerResetAppPreferencesOutline();
+        } else if (itemName == 'erase all data (factory reset)') {
+          triggerEraseAllDataOutline();
+        } else {
+          _handleAppTap(itemName); // Fallback to app tap if not a specific settings item
+        }
+      } else {
+        _handleAppTap(itemName); // General app tap
+      }
     } else if (cmd.contains('back')) {
       // Prioritize programmatic back if available for the current screen
       if (_currentScreenView == CurrentScreenView.appInfo) {
-        await triggerAppInfoBackButtonAction();
+        triggerAppInfoBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.clearData) {
-        await triggerClearDataBackButtonAction();
+        triggerClearDataBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.connectionSharing ||
           _currentScreenView == CurrentScreenView.apps1) {
         setState(() {
@@ -599,26 +631,36 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     }
   }
 
-  Future<void> triggerAppInfoStorageCacheAction() async =>
-      await _appInfoStorageCacheButtonKey.currentState
-          ?.triggerOutlineAndAction();
-  Future<void> triggerAppInfoBackButtonAction() async =>
-      await _appInfoBackButtonKey.currentState?.triggerOutlineAndAction();
-  Future<void> triggerClearDataButtonAction() async =>
-      await _clearDataClearDataButtonKey.currentState?.triggerOutlineAndAction();
-  Future<void> triggerClearCacheButtonAction() async =>
-      await _clearDataClearCacheButtonKey.currentState
-          ?.triggerOutlineAndAction();
-  Future<void> triggerClearDataBackButtonAction() async =>
-      await _clearDataBackButtonKey.currentState?.triggerOutlineAndAction();
-  Future<void> triggerDialogAppInfoAction() async =>
-      await _appActionDialogAppInfoKey.currentState?.triggerOutlineAndAction();
-  Future<void> triggerDialogUninstallAction() async =>
-      await _appActionDialogUninstallKey.currentState?.triggerOutlineAndAction();
-  Future<void> triggerDialogClearDataConfirmAction() async =>
-      await _clearDataDialogConfirmKey.currentState?.triggerOutlineAndAction();
-  Future<void> triggerDialogClearDataCancelAction() async =>
-      await _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
+  void triggerAppInfoStorageCacheAction() =>
+      _appInfoStorageCacheButtonKey.currentState?.triggerOutlineAndAction();
+  void triggerAppInfoBackButtonAction() =>
+      _appInfoBackButtonKey.currentState?.triggerOutlineAndAction();
+  void triggerClearDataButtonAction() =>
+      _clearDataClearDataButtonKey.currentState?.triggerOutlineAndAction();
+  void triggerClearCacheButtonAction() =>
+      _clearDataClearCacheButtonKey.currentState?.triggerOutlineAndAction();
+  void triggerClearDataBackButtonAction() =>
+      _clearDataBackButtonKey.currentState?.triggerOutlineAndAction();
+  void triggerDialogAppInfoAction() =>
+      _appActionDialogAppInfoKey.currentState?.triggerOutlineAndAction();
+  void triggerDialogUninstallAction() =>
+      _appActionDialogUninstallKey.currentState?.triggerOutlineAndAction();
+  void triggerDialogClearDataConfirmAction() =>
+      _clearDataDialogConfirmKey.currentState?.triggerOutlineAndAction();
+  void triggerDialogClearDataCancelAction() =>
+      _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
+
+  // --- Methods to trigger outlines for SystemSettingsScreen and ResetOptionScreen ---
+  void triggerSystemResetOptionsOutline() =>
+      _systemSettingsResetOptionsKey.currentState?.triggerOutlineAndAction();
+  void triggerResetMobileNetworkOutline() =>
+      _resetMobileNetworkKey.currentState?.triggerOutlineAndAction();
+  void triggerResetBluetoothWifiOutline() =>
+      _resetBluetoothWifiKey.currentState?.triggerOutlineAndAction();
+  void triggerResetAppPreferencesOutline() =>
+      _resetAppPreferencesKey.currentState?.triggerOutlineAndAction();
+  void triggerEraseAllDataOutline() =>
+      _eraseAllDataKey.currentState?.triggerOutlineAndAction();
 
   // --- Stubs for Settings/Reset Actions ---
 
