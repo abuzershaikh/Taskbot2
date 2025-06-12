@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:taskbot2/keyboard/keyboard_view.dart';
 
-class KeyboardScreen extends StatelessWidget {
+class KeyboardScreen extends StatefulWidget {
   const KeyboardScreen({super.key});
+
+  @override
+  State<KeyboardScreen> createState() => _KeyboardScreenState();
+}
+
+class _KeyboardScreenState extends State<KeyboardScreen> {
+  final FocusNode _focusNode = FocusNode();
+  final TextEditingController _textEditingController = TextEditingController();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _textEditingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,12 +27,14 @@ class KeyboardScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const Expanded(
+          Expanded(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               child: Center(
                 child: TextField(
-                  decoration: InputDecoration(
+                  focusNode: _focusNode,
+                  controller: _textEditingController,
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Tap here to use keyboard',
                   ),
@@ -26,7 +43,10 @@ class KeyboardScreen extends StatelessWidget {
             ),
           ),
           // This is where the keyboard is displayed
-          const KeyboardView(),
+          KeyboardView(
+            focusNode: _focusNode,
+            textEditingController: _textEditingController,
+          ),
         ],
       ),
     );

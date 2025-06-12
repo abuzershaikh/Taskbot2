@@ -620,6 +620,71 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   Future<void> triggerDialogClearDataCancelAction() async =>
       await _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
 
+  // --- Stubs for Settings/Reset Actions ---
+
+  Future<void> triggerSettingsSystemAction() async {
+    print("PhoneMockupContainerState: triggerSettingsSystemAction called.");
+    setState(() {
+      // This action should navigate from the main Settings screen to the "System" sub-screen.
+      _currentScreenView = CurrentScreenView.systemSettings;
+      _updateCurrentScreenWidget(); // Ensure the UI updates to show the System settings screen
+    });
+    await Future.delayed(const Duration(milliseconds: 200)); // Simulate transition
+    print("PhoneMockupContainerState: Navigated to System Settings screen.");
+  }
+
+  Future<void> triggerSystemResetOptionsAction() async {
+    print("PhoneMockupContainerState: triggerSystemResetOptionsAction called.");
+    setState(() {
+      // This action should navigate from "System" settings to "Reset options".
+      _currentScreenView = CurrentScreenView.resetOptions;
+      _updateCurrentScreenWidget(); // Ensure UI updates
+    });
+    await Future.delayed(const Duration(milliseconds: 200)); // Simulate transition
+    print("PhoneMockupContainerState: Navigated to Reset Options screen.");
+  }
+
+  Future<void> triggerResetMobileNetworkSettingsAction() async {
+    print("PhoneMockupContainerState: triggerResetMobileNetworkSettingsAction called.");
+    setState(() {
+      // This action should navigate from "Reset options" to "Reset mobile network settings".
+      _currentScreenView = CurrentScreenView.resetMobileNetworkSettings;
+      _updateCurrentScreenWidget(); // Ensure UI updates
+    });
+    await Future.delayed(const Duration(milliseconds: 250)); // Simulate transition/dialog appearance
+    print("PhoneMockupContainerState: Navigated to Reset Mobile Network Settings screen/dialog.");
+  }
+
+  Future<void> triggerConfirmResetNetworkAction() async {
+    print("PhoneMockupContainerState: triggerConfirmResetNetworkAction called (first confirmation).");
+    // This might show another confirmation dialog or just proceed.
+    // For now, just log and delay. If it shows a dialog, a real implementation would set _activeDialog.
+    setState(() {
+      // Potentially update a state variable if the UI changes, e.g., to show a spinner or second dialog
+      print("PhoneMockupContainerState: First network reset confirmation processed.");
+    });
+    await Future.delayed(const Duration(milliseconds: 300)); // Simulate action
+  }
+
+  Future<void> triggerFinalConfirmResetNetworkAction() async {
+    print("PhoneMockupContainerState: triggerFinalConfirmResetNetworkAction called (final confirmation).");
+    // This is the final step. It would perform the reset and likely navigate away or show a toast.
+    setState(() {
+      // After reset, it might navigate back to a general settings screen or show a toast.
+      // For now, we'll just log the action completion.
+      // A real implementation might call showInternalToast("Network settings have been reset.");
+      // And potentially navigate: _currentScreenView = CurrentScreenView.settings; _updateCurrentScreenWidget();
+      print("PhoneMockupContainerState: Final network reset confirmation processed. Network should be 'reset'.");
+    });
+    await Future.delayed(const Duration(milliseconds: 1000)); // Simulate longer action for reset
+    // After reset, the actual OS often returns to a general settings page or the specific reset options page.
+    // Let's simulate returning to Reset Options for now, as the simulator will navigate away after this.
+    // setState(() {
+    //   _currentScreenView = CurrentScreenView.resetOptions;
+    //  _updateCurrentScreenWidget();
+    // });
+  }
+
   void simulateClearDataClick() {
     if (_currentAppDetails != null) {
       final String appName = _currentAppDetails!['name']!;
@@ -798,7 +863,8 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                 child: Material( // Wrap KeyboardView in Material for theming and correct rendering
                   type: MaterialType.transparency, // Or specific color if needed
                   child: KeyboardView(
-                    controller: _keyboardTextController,
+                    textEditingController: _keyboardTextController ?? TextEditingController(),
+                    focusNode: FocusNode(),
                     onSearchPressed: _currentSearchCallback, // Pass the stored callback
                   ),
                 ),

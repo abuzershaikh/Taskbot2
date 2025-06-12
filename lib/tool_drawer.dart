@@ -67,14 +67,29 @@ class ToolDrawerState extends State<ToolDrawer> {
 
   // Method to parse the command
   Map<String, String>? _parseCommand(String command) {
-    final lowerCaseCommand = command.toLowerCase();
-    if (lowerCaseCommand.contains('clear data')) {
-      // Find the index of "clear data"
-      final clearDataIndex = lowerCaseCommand.indexOf('clear data');
-      if (clearDataIndex > 0) { // Ensure "clear data" is not at the beginning
-        final appName = command.substring(0, clearDataIndex).trim();
-        if (appName.isNotEmpty) {
+    final trimmedCommand = command.trim();
+    final parts = trimmedCommand.split('+');
+
+    if (parts.length == 2) {
+      final appName = parts[0].trim();
+      final actionString = parts[1].trim().toLowerCase();
+      if (appName.isNotEmpty) {
+        if (actionString == 'clear data' || actionString == 'cleardata') {
           return {'appName': appName, 'action': 'clearData'};
+        } else if (actionString == 'reset') {
+          return {'appName': appName, 'action': 'fullReset'};
+        }
+      }
+    } else {
+      // Fallback for old "AppName clear data" format for backward compatibility
+      final lowerCaseCommand = trimmedCommand.toLowerCase();
+      if (lowerCaseCommand.contains('clear data')) {
+        final clearDataIndex = lowerCaseCommand.indexOf('clear data');
+        if (clearDataIndex > 0) {
+          final appName = trimmedCommand.substring(0, clearDataIndex).trim();
+          if (appName.isNotEmpty) {
+            return {'appName': appName, 'action': 'clearData'};
+          }
         }
       }
     }
@@ -444,14 +459,48 @@ class ToolDrawerState extends State<ToolDrawer> {
             if (!simulationSucceeded && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("Error: App '$appName' not found or simulation failed."),
+                  content: Text("Error: App '$appName' not found or clear data simulation failed."),
                   backgroundColor: Colors.red,
                 ),
               );
             }
-          } else {
+          } else if (action == 'fullReset' && appName != null) {
+            widget.onClose(); // Close the drawer
+            await Future.delayed(const Duration(milliseconds: 300)); // Allow drawer to close
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Starting full reset simulation for $appName..."),
+                  backgroundColor: Colors.blue, // Use a different color for start
+                ),
+              );
+            }
+
+            final bool simulationSucceeded = await _appAutomationSimulator.startFullResetSimulation(appName);
+            
+            if (simulationSucceeded) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Full reset simulation for $appName completed successfully."),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Full reset simulation for $appName failed."),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          }
+          else {
             // ignore: avoid_print
-            print('Parsed command: $parsedCommand, but action or appName is invalid for simulation.');
+            print('Parsed command: $parsedCommand, but action or appName is invalid for known simulations.');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

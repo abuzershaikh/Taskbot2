@@ -3,9 +3,16 @@ import 'package:taskbot2/keyboard/widgets/action_bar.dart';
 import 'package:taskbot2/keyboard/widgets/keyboard_key.dart';
 
 class KeyboardView extends StatelessWidget {
-  final TextEditingController? controller;
+  final FocusNode focusNode;
+  final TextEditingController textEditingController;
   final VoidCallback? onSearchPressed;
-  const KeyboardView({super.key, this.controller, this.onSearchPressed});
+
+  const KeyboardView({
+    super.key,
+    required this.focusNode,
+    required this.textEditingController,
+    this.onSearchPressed, TextEditingController? controller,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +45,12 @@ class KeyboardView extends StatelessWidget {
               label: key,
               backgroundColor: keyColor,
               onTap: () {
-                if (controller != null && controller!.text.isNotEmpty) {
-                  final currentText = controller!.text;
-                  controller!.text =
+                if (textEditingController.text.isNotEmpty) {
+                  final currentText = textEditingController.text;
+                  textEditingController.text =
                       currentText.substring(0, currentText.length - 1);
                 }
+                focusNode.requestFocus();
               },
             );
           }
@@ -53,9 +61,8 @@ class KeyboardView extends StatelessWidget {
           label: key.toString(),
           backgroundColor: keyColor,
           onTap: () {
-            if (controller != null) {
-              controller!.text += key.toString();
-            }
+            textEditingController.text += key.toString();
+            focusNode.requestFocus();
           },
         );
       }).toList(),
@@ -106,9 +113,8 @@ class KeyboardView extends StatelessWidget {
               label: '.',
               backgroundColor: keyColor,
               onTap: () {
-                if (controller != null) {
-                  controller!.text += '.';
-                }
+                textEditingController.text += '.';
+                focusNode.requestFocus();
               },
             )),
         Flexible(
