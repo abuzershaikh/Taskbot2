@@ -680,10 +680,12 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         decoration: const BoxDecoration(
           color: Colors.black,
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(0.0),
+          child: Stack(
+            children: [
+              Positioned(
+                top: 0,
               left: 0,
               right: 0,
               child: GestureDetector(
@@ -765,7 +767,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           ],
         ),
       ),
-    );
+    ),);
   }
 
   Widget _buildStatusBar() {
