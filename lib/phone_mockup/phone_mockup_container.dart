@@ -256,7 +256,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             app: _currentAppDetails!,
             onBack: () => navigateHome(),
             onNavigateToClearData: (appData) => navigateToStorageUsage(),
-            showDialog: _showDialog,
+            showDialog: (Widget dialogWidget) => _showDialog(context, dialogWidget),
             dismissDialog: dismissDialog,
             backButtonKey: _appInfoBackButtonKey,
             openButtonKey: _appInfoOpenButtonKey,
@@ -288,7 +288,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                 _updateCurrentScreenWidget();
               });
             },
-            showDialog: _showDialog,
+            showDialog: (Widget dialogWidget) => _showDialog(context, dialogWidget),
             dismissDialog: dismissDialog,
             onPerformClearData: () =>
                 _performActualDataClear(_currentAppDetails!['name']!),
@@ -384,13 +384,15 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
-          // Add this new callback prop
           onNavigateToResetMobileNetwork: () {
             setState(() {
               _currentScreenView = CurrentScreenView.resetMobileNetworkSettings;
               _updateCurrentScreenWidget();
             });
           },
+          showMockupDialog: _showDialog, // Pass the _showDialog method
+          showMockupToast: showInternalToast, // Pass the showInternalToast method
+          dismissMockupDialog: dismissDialog, // Pass the dismissDialog method
         );
         break;
       case CurrentScreenView.resetMobileNetworkSettings: // New case
@@ -614,6 +616,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     if (_currentAppDetails != null) {
       final String appName = _currentAppDetails!['name']!;
       _showDialog(
+        context, // Pass context here
         CustomClearDataDialog(
           title: 'Clear app data?',
           content:
@@ -657,9 +660,11 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     _drawerKey.currentState?.openDrawer();
   }
 
-  void _showDialog(Widget dialog) {
+  // Modified to accept BuildContext, though not directly used by this implementation
+  // This is to match the required signature for the callback.
+  void _showDialog(BuildContext context, Widget dialogContent) {
     setState(() {
-      _activeDialog = dialog;
+      _activeDialog = dialogContent;
       _isBlurred = true;
     });
   }

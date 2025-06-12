@@ -3,56 +3,59 @@ import 'package:flutter/material.dart';
 class ResetOptionScreen extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onNavigateToResetMobileNetwork;
+  final void Function(BuildContext, Widget) showMockupDialog;
+  final void Function(String) showMockupToast;
+  final VoidCallback dismissMockupDialog;
 
   const ResetOptionScreen({
     super.key,
     required this.onBack,
     required this.onNavigateToResetMobileNetwork,
+    required this.showMockupDialog,
+    required this.showMockupToast,
+    required this.dismissMockupDialog,
   });
 
   // Function to show the reset dialog
   void _showResetDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Reset Bluetooth & Wi-Fi'),
-          content: const Text(
-            "This will reset all Wi-Fi & Bluetooth settings. You can't undo this action.",
-            style: TextStyle(fontSize: 14, color: Colors.black87),
-          ),
-          actions: <Widget>[
-            TextButton(
+    showMockupDialog(
+      context,
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Reset Bluetooth & Wi-Fi'),
+        content: const Text(
+          "This will reset all Wi-Fi & Bluetooth settings. You can't undo this action.",
+          style: TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+        actions: <Widget>[
+          Builder(builder: (dialogContext) {
+            return TextButton(
               child: Text(
                 'CANCEL',
                 style: TextStyle(color: Theme.of(context).primaryColor),
               ),
               onPressed: () {
-                Navigator.of(dialogContext).pop(); // Dismiss the dialog
+                dismissMockupDialog(); // Dismiss the dialog
               },
-            ),
-            TextButton(
+            );
+          }),
+          Builder(builder: (dialogContext) {
+            return TextButton(
               child: Text(
                 'RESET',
                 style: TextStyle(color: Theme.of(context).primaryColor),
               ),
               onPressed: () {
-                Navigator.of(dialogContext).pop(); // Dismiss the dialog
+                dismissMockupDialog(); // Dismiss the dialog
                 // Show a toast (SnackBar) message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Wi-Fi & Bluetooth settings have been reset.'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                showMockupToast('Wi-Fi & Bluetooth settings have been reset.');
                 print('Resetting Bluetooth & Wi-Fi settings...');
                 // Add actual reset logic here if needed
               },
-            ),
-          ],
-        );
-      },
+            );
+          }),
+        ],
+      ),
     );
   }
 
