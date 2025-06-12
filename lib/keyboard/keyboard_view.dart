@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:taskbot2/keyboard/action_bar.dart';
-import 'package:taskbot2/keyboard/keyboard_key.dart';
- 
+import 'package:taskbot2/keyboard/widgets/action_bar.dart';
+import 'package:taskbot2/keyboard/widgets/keyboard_key.dart';
+
 class KeyboardView extends StatelessWidget {
-  const KeyboardView({super.key});
+  final TextEditingController? controller;
+  final VoidCallback? onSearchPressed;
+  const KeyboardView({super.key, this.controller, this.onSearchPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +33,31 @@ class KeyboardView extends StatelessWidget {
     return Row(
       children: keys.map((key) {
         if (key is IconData) {
-          return KeyboardKey(label: key, backgroundColor: keyColor);
+          if (key == Icons.backspace) {
+            return KeyboardKey(
+              label: key,
+              backgroundColor: keyColor,
+              onTap: () {
+                if (controller != null && controller!.text.isNotEmpty) {
+                  final currentText = controller!.text;
+                  controller!.text =
+                      currentText.substring(0, currentText.length - 1);
+                }
+              },
+            );
+          }
+          // For other IconData keys like shift
+          return KeyboardKey(label: key, backgroundColor: keyColor, onTap: () {}); // Placeholder onTap
         }
-        return KeyboardKey(label: key.toString(), backgroundColor: keyColor);
+        return KeyboardKey(
+          label: key.toString(),
+          backgroundColor: keyColor,
+          onTap: () {
+            if (controller != null) {
+              controller!.text += key.toString();
+            }
+          },
+        );
       }).toList(),
     );
   }
@@ -41,9 +65,18 @@ class KeyboardView extends StatelessWidget {
   Widget _buildBottomRow(Color keyColor) {
     return Row(
       children: [
-        Flexible(flex: 2, child: KeyboardKey(label: '?123', backgroundColor: keyColor)),
-        Flexible(flex: 1, child: KeyboardKey(label: Icons.sentiment_satisfied_alt_outlined, backgroundColor: keyColor)),
-        Flexible(flex: 1, child: KeyboardKey(label: Icons.language, backgroundColor: keyColor)),
+        Flexible(
+            flex: 2,
+            child: KeyboardKey(label: '?123', backgroundColor: keyColor, onTap: () {})), // Placeholder onTap
+        Flexible(
+            flex: 1,
+            child: KeyboardKey(
+                label: Icons.sentiment_satisfied_alt_outlined,
+                backgroundColor: keyColor,
+                onTap: () {})), // Placeholder onTap
+        Flexible(
+            flex: 1,
+            child: KeyboardKey(label: Icons.language, backgroundColor: keyColor, onTap: () {})), // Placeholder onTap
         Flexible(
             flex: 5,
             child: Padding(
@@ -67,8 +100,24 @@ class KeyboardView extends StatelessWidget {
                     ),
                   )),
             )),
-        Flexible(flex: 1, child: KeyboardKey(label: '.', backgroundColor: keyColor)),
-        Flexible(flex: 2, child: KeyboardKey(label: Icons.search, backgroundColor: keyColor)),
+        Flexible(
+            flex: 1,
+            child: KeyboardKey(
+              label: '.',
+              backgroundColor: keyColor,
+              onTap: () {
+                if (controller != null) {
+                  controller!.text += '.';
+                }
+              },
+            )),
+        Flexible(
+            flex: 2,
+            child: KeyboardKey(
+                label: Icons.search,
+                backgroundColor: keyColor,
+                onTap: onSearchPressed, // Call the callback
+                )),
       ],
     );
   }

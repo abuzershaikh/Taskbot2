@@ -165,215 +165,217 @@ class ToolDrawerState extends State<ToolDrawer> {
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Tools',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+          child: SingleChildScrollView( // Added this widget to prevent overflow
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Tools',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const Divider(height: 30, thickness: 1),
-                ElevatedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('Add Image'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                if (widget.pickedImage != null)
+                  const Divider(height: 30, thickness: 1),
                   ElevatedButton.icon(
-                    onPressed: _dismissImage,
-                    icon: const Icon(Icons.delete),
-                    label: const Text('Remove Image'),
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.add_photo_alternate),
+                    label: const Text('Add Image'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       textStyle: const TextStyle(fontSize: 16),
-                      backgroundColor: Colors.red,
                     ),
                   ),
-                const SizedBox(height: 10), // Spacing before new buttons
-                // New buttons for Frame
-                ElevatedButton.icon(
-                  onPressed: _pickFrameImage,
-                  icon: const Icon(Icons.filter_hdr_outlined), // Or similar
-                  label: const Text('Import Frame'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: _dismissFrameImage,
-                  icon: const Icon(Icons.delete_outline), // Or similar
-                  label: const Text('Remove Frame'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                    backgroundColor: Colors.redAccent, // Slightly different red
-                  ),
-                ),
-                const SizedBox(height: 10), // Add some spacing
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Close the drawer first
-                    widget.onClose();
-                    // Navigate to WallpaperSettingsScreen
-                    // Ensure context is available and mounted before navigating
-                    if (context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => WallpaperSettingsScreen(
-                            onWallpaperChanged: widget.onWallpaperChanged,
-                            onRemoveWallpaper: widget.onRemoveWallpaper,
-                            currentWallpaper: widget.currentWallpaper,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.wallpaper),
-                  label: const Text('Change Wallpaper'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // New buttons for Mockup Wallpaper
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
-                      widget.onMockupWallpaperChanged(File(image.path));
-                    }
-                    widget.onClose();
-                  },
-                  icon: const Icon(Icons.photo_size_select_actual_outlined),
-                  label: const Text('Set Mockup WP'), // Shorter label
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    widget.onMockupWallpaperChanged(null);
-                    widget.onClose();
-                  },
-                  icon: const Icon(Icons.hide_image_outlined),
-                  label: const Text('Remove Mockup WP'), // Shorter label
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                    backgroundColor: Colors.orangeAccent, // Different color for remove
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: _pickIcons,
-                icon: const Icon(Icons.upload_file), // Or Icons.add_photo_alternate_multiple_outline
-                label: const Text('Upload Icons'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-              ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Image Controls:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Scale:'),
-                    SizedBox(
-                      width: 100, // Give it a fixed width
-                      child: Slider(
-                        value: widget.currentImageScale, // FIX: Use the actual current scale
-                        min: 0.1,
-                        max: 5.0,
-                        divisions: 49,
-                        onChanged: (double value) {
-                          widget.onImageScale(value); // FIX: Call the parent's scale callback
-                        },
+                  const SizedBox(height: 10),
+                  if (widget.pickedImage != null)
+                    ElevatedButton.icon(
+                      onPressed: _dismissImage,
+                      icon: const Icon(Icons.delete),
+                      label: const Text('Remove Image'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        textStyle: const TextStyle(fontSize: 16),
+                        backgroundColor: Colors.red,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => widget.onImagePan(-10.0, 0.0), // Move left
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: () => widget.onImagePan(10.0, 0.0), // Move right
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_upward),
-                      onPressed: () => widget.onImagePan(0.0, -10.0), // Move up
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_downward),
-                      onPressed: () => widget.onImagePan(0.0, 10.0), // Move down
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20), // Spacing before command input
-                const Text(
-                  'Command Input:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: TextField(
-                    controller: _commandController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Enter command',
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: ElevatedButton(
-                    onPressed: _isSimulationRunning ? null : _handleRunCommand, // Updated onPressed
+                  const SizedBox(height: 10), // Spacing before new buttons
+                  // New buttons for Frame
+                  ElevatedButton.icon(
+                    onPressed: _pickFrameImage,
+                    icon: const Icon(Icons.filter_hdr_outlined), // Or similar
+                    label: const Text('Import Frame'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       textStyle: const TextStyle(fontSize: 16),
-                      backgroundColor: _isSimulationRunning ? Colors.grey : null, // Optional: visual feedback
                     ),
-                    child: Text(_isSimulationRunning ? 'Simulating...' : 'Run Command'), // Updated text
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _dismissFrameImage,
+                    icon: const Icon(Icons.delete_outline), // Or similar
+                    label: const Text('Remove Frame'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                      backgroundColor: Colors.redAccent, // Slightly different red
+                    ),
+                  ),
+                  const SizedBox(height: 10), // Add some spacing
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // Close the drawer first
+                      widget.onClose();
+                      // Navigate to WallpaperSettingsScreen
+                      // Ensure context is available and mounted before navigating
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WallpaperSettingsScreen(
+                              onWallpaperChanged: widget.onWallpaperChanged,
+                              onRemoveWallpaper: widget.onRemoveWallpaper,
+                              currentWallpaper: widget.currentWallpaper,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.wallpaper),
+                    label: const Text('Change Wallpaper'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // New buttons for Mockup Wallpaper
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) {
+                        widget.onMockupWallpaperChanged(File(image.path));
+                      }
+                      widget.onClose();
+                    },
+                    icon: const Icon(Icons.photo_size_select_actual_outlined),
+                    label: const Text('Set Mockup WP'), // Shorter label
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      widget.onMockupWallpaperChanged(null);
+                      widget.onClose();
+                    },
+                    icon: const Icon(Icons.hide_image_outlined),
+                    label: const Text('Remove Mockup WP'), // Shorter label
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                      backgroundColor: Colors.orangeAccent, // Different color for remove
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  onPressed: _pickIcons,
+                  icon: const Icon(Icons.upload_file), // Or Icons.add_photo_alternate_multiple_outline
+                  label: const Text('Upload Icons'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    textStyle: const TextStyle(fontSize: 16),
                   ),
                 ),
-              ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Image Controls:',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Scale:'),
+                      SizedBox(
+                        width: 100, // Give it a fixed width
+                        child: Slider(
+                          value: widget.currentImageScale, // FIX: Use the actual current scale
+                          min: 0.1,
+                          max: 5.0,
+                          divisions: 49,
+                          onChanged: (double value) {
+                            widget.onImageScale(value); // FIX: Call the parent's scale callback
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => widget.onImagePan(-10.0, 0.0), // Move left
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () => widget.onImagePan(10.0, 0.0), // Move right
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_upward),
+                        onPressed: () => widget.onImagePan(0.0, -10.0), // Move up
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_downward),
+                        onPressed: () => widget.onImagePan(0.0, 10.0), // Move down
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20), // Spacing before command input
+                  const Text(
+                    'Command Input:',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: TextField(
+                      controller: _commandController,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Enter command',
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton(
+                      onPressed: _isSimulationRunning ? null : _handleRunCommand, // Updated onPressed
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        textStyle: const TextStyle(fontSize: 16),
+                        backgroundColor: _isSimulationRunning ? Colors.grey : null, // Optional: visual feedback
+                      ),
+                      child: Text(_isSimulationRunning ? 'Simulating...' : 'Run Command'), // Updated text
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

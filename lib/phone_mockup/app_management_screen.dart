@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:taskbot2/phone_mockup/phone_mockup_container.dart'; // Added for PhoneMockupContainerState
 // AppInfoScreen ka import ab yahan zaroori nahi hai.
 
 class AppManagementScreen extends StatefulWidget {
@@ -27,19 +28,44 @@ class _AppManagementScreenState extends State<AppManagementScreen> {
   List<Map<String, String>> _filteredApps = [];
   bool _isLoading = true;
   final _random = Random();
+  final FocusNode _searchFocusNode = FocusNode(); // Added FocusNode
 
   @override
   void initState() {
     super.initState();
     _loadAppsFromAssets();
     _searchController.addListener(_filterApps);
+    _searchFocusNode.addListener(_handleSearchFocusChange); // Added listener
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_filterApps);
     _searchController.dispose();
+    _searchFocusNode.removeListener(_handleSearchFocusChange); // Removed listener
+    _searchFocusNode.dispose(); // Disposed FocusNode
     super.dispose();
+  }
+
+  void _handleSearchFocusChange() {
+    final phoneMockupState = context.findAncestorStateOfType<PhoneMockupContainerState>();
+    if (phoneMockupState != null) {
+      if (_searchFocusNode.hasFocus) {
+        phoneMockupState.showKeyboard(
+          _searchController,
+          onSearch: _onSearchSubmitted, // Pass the search handler
+        );
+      } else {
+        phoneMockupState.hideKeyboard();
+      }
+    } else {
+      print("AppManagementScreen: PhoneMockupContainerState not found.");
+    }
+  }
+
+  void _onSearchSubmitted() {
+    _filterApps(); // Perform the search filtering
+    _searchFocusNode.unfocus(); // Unfocus to hide the keyboard
   }
 
   String _generateRandomAppSize() {
@@ -146,6 +172,9 @@ class _AppManagementScreenState extends State<AppManagementScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchController,
+              focusNode: _searchFocusNode, // Assign FocusNode
+              readOnly: true, // Set to readOnly
+              showCursor: true, // Show cursor
               decoration: InputDecoration(
                 hintText: 'Search ${_allApps.length} items',
                 prefixIcon: const Icon(Icons.search),

@@ -22,6 +22,7 @@ import 'internal_toast.dart';
 import 'apps1.dart';
 import 'app_management_screen.dart';
 import 'system_app_screen.dart'; // Import the system apps screen
+import 'package:taskbot2/keyboard/keyboard_view.dart';
 
 // Enum to manage the current view being displayed in the phone mockup
 enum CurrentScreenView {
@@ -67,6 +68,11 @@ class PhoneMockupContainer extends StatefulWidget {
 class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   final GlobalKey<NotificationDrawerState> _drawerKey =
       GlobalKey<NotificationDrawerState>();
+
+  // Keyboard visibility state
+  bool _isKeyboardVisible = false;
+  TextEditingController? _keyboardTextController;
+  VoidCallback? _currentSearchCallback; // Added for search callback
 
   CurrentScreenView _currentScreenView = CurrentScreenView.appGrid;
   Map<String, String>?
@@ -671,6 +677,24 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     });
   }
 
+  // Method to show the keyboard
+  void showKeyboard(TextEditingController controller, {VoidCallback? onSearch}) {
+    setState(() {
+      _keyboardTextController = controller;
+      _currentSearchCallback = onSearch; // Store the search callback
+      _isKeyboardVisible = true;
+    });
+  }
+
+  // Method to hide the keyboard
+  void hideKeyboard() {
+    setState(() {
+      _keyboardTextController = null;
+      _currentSearchCallback = null; // Clear the search callback
+      _isKeyboardVisible = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -764,6 +788,21 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                 ),
               ),
             NotificationDrawer(key: _drawerKey),
+
+            // Add Keyboard conditionally
+            if (_isKeyboardVisible)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Material( // Wrap KeyboardView in Material for theming and correct rendering
+                  type: MaterialType.transparency, // Or specific color if needed
+                  child: KeyboardView(
+                    controller: _keyboardTextController,
+                    onSearchPressed: _currentSearchCallback, // Pass the stored callback
+                  ),
+                ),
+              ),
           ],
         ),
       ),
