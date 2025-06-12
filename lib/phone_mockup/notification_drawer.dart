@@ -16,20 +16,37 @@ class NotificationDrawerState extends State<NotificationDrawer> {
   static const double _closedHeight = 0.0;
   static const double _halfOpenHeightFraction = 0.5; // Half of phone height
   static const double _fullOpenHeightFraction = 1.0; // Full phone height
-
-  // Get the phone mockup's height for calculation (assuming 600px as defined in PhoneMockupContainer)
-  // It's crucial this matches your PhoneMockupContainer's height
   static const double phoneMockupHeight = 600.0;
+
+  // State for toggles
+  bool _wifiEnabled = true;
+  bool _bluetoothEnabled = true;
+  bool _soundMode = true;
+  bool _autoRotate = true;
+  bool _airplaneMode = false;
+  bool _flashlight = false;
+  bool _mobileData = true;
+  bool _powerSaving = false;
+  bool _location = true;
+  bool _mobileHotspot = false;
+  bool _linkToWindows = false;
+  bool _screenRecorder = false;
+  bool _quickShare = true;
+  bool _dnd = false;
+  bool _eyeComfortShield = false;
+  bool _darkMode = false;
+  double _brightnessValue = 0.6;
+
 
   void openDrawer() {
     setState(() {
-      _drawerHeight = phoneMockupHeight * _halfOpenHeightFraction; // Open to half
+      _drawerHeight = phoneMockupHeight * _halfOpenHeightFraction;
     });
   }
 
   void closeDrawer() {
     setState(() {
-      _drawerHeight = _closedHeight; // Close it
+      _drawerHeight = _closedHeight;
     });
   }
 
@@ -42,17 +59,15 @@ class NotificationDrawerState extends State<NotificationDrawer> {
     if (!_isDragging) return;
 
     final double delta = details.globalPosition.dy - _dragStartDy;
-    double newHeight = _drawerHeight + delta; // Dragging down increases height
+    double newHeight = _drawerHeight + delta;
 
-    // Clamp the new height between 0 and full phone height
     _drawerHeight = newHeight.clamp(
       _closedHeight,
       phoneMockupHeight * _fullOpenHeightFraction,
     );
 
-    _dragStartDy = details.globalPosition.dy; // Update drag start for next update
-
-    setState(() {}); // Rebuild to reflect the new height
+    _dragStartDy = details.globalPosition.dy;
+    setState(() {});
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
@@ -62,31 +77,28 @@ class NotificationDrawerState extends State<NotificationDrawer> {
     final double fullPoint = phoneMockupHeight * _fullOpenHeightFraction;
 
     if (details.primaryVelocity != null) {
-      // If dragged quickly
-      if (details.primaryVelocity! < -500) { // Swiping up fast
+      if (details.primaryVelocity! < -500) {
         if (_drawerHeight > halfPoint) {
-            _drawerHeight = halfPoint; // If moving up from full, go to half
+            _drawerHeight = halfPoint;
         } else {
-            closeDrawer(); // If moving up from half or less, close
+            closeDrawer();
         }
-      } else if (details.primaryVelocity! > 500) { // Swiping down fast
+      } else if (details.primaryVelocity! > 500) {
         if (_drawerHeight < halfPoint) {
-            _drawerHeight = halfPoint; // If moving down from closed, go to half
+            _drawerHeight = halfPoint;
         } else {
-            _drawerHeight = fullPoint; // If moving down from half, go to full
+            _drawerHeight = fullPoint;
         }
       } else {
-        // If dragged slowly, snap to nearest valid position
-        if (_drawerHeight < halfPoint * 0.75) { // If less than 75% of half
-            closeDrawer(); // Snap to closed
-        } else if (_drawerHeight < fullPoint * 0.75) { // If less than 75% of full
-            _drawerHeight = halfPoint; // Snap to half
+        if (_drawerHeight < halfPoint * 0.75) {
+            closeDrawer();
+        } else if (_drawerHeight < fullPoint * 0.75) {
+            _drawerHeight = halfPoint;
         } else {
-            _drawerHeight = fullPoint; // Snap to full
+            _drawerHeight = fullPoint;
         }
       }
     } else {
-       // No velocity, just snap to nearest based on current position
         if (_drawerHeight < halfPoint * 0.75) {
             closeDrawer();
         } else if (_drawerHeight < fullPoint * 0.75) {
@@ -102,209 +114,52 @@ class NotificationDrawerState extends State<NotificationDrawer> {
   @override
   Widget build(BuildContext context) {
     return AnimatedPositioned(
-      duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300), // Animate only when not dragging
+      duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
       curve: Curves.easeOut,
-      top: 0, // Always start at the top of its parent (the Stack)
+      top: 0,
       left: 0,
       right: 0,
-      height: _drawerHeight, // Animate its height to show/hide
+      height: _drawerHeight,
       child: GestureDetector(
-        // The GestureDetector should cover the whole AnimatedPositioned area
-        // Its onTap should close the drawer if it's open and not fully closed
-        onTap: _drawerHeight > _closedHeight + 10.0 ? closeDrawer : null, // Add a small buffer to avoid closing on initial tap
+        onTap: _drawerHeight > _closedHeight + 10.0 ? closeDrawer : null,
         onVerticalDragStart: _onVerticalDragStart,
         onVerticalDragUpdate: _onVerticalDragUpdate,
         onVerticalDragEnd: _onVerticalDragEnd,
         child: Container(
-          // Dim background when drawer is open, calculated dynamically
           color: _drawerHeight > _closedHeight
               ? Colors.black.withOpacity(0.3 * (_drawerHeight / phoneMockupHeight).clamp(0.0, 1.0))
               : Colors.transparent,
-          // Use a Column here to ensure the actual drawer content is also aligned to top
           child: Column(
             children: [
-              // This is the actual draggable content container.
-              // Use ClipRRect to ensure content doesn't overflow its rounded corners
               ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(20.0), // Rounded corners at the bottom
+                  bottomLeft: Radius.circular(20.0),
                   bottomRight: Radius.circular(20.0),
                 ),
                 child: Container(
                   width: double.infinity,
-                  color: const Color(0xFFF0F0F0), // Light grey background like in the image
-                  // Limit the height of the content container to the drawer's current height,
-                  // subtracting any fixed elements like the handle if needed.
-                  height: _drawerHeight > _closedHeight ? _drawerHeight : 0, // Only give height if drawer is open
-
+                  color: const Color(0xFFF0F0F0),
+                  height: _drawerHeight > _closedHeight ? _drawerHeight : 0,
                   child: SingleChildScrollView(
-                    // physics: is determined by the drawer's open state
                     physics: _drawerHeight >= phoneMockupHeight * _halfOpenHeightFraction
-                        ? const AlwaysScrollableScrollPhysics() // Enable scrolling when half or full open
-                        : const NeverScrollableScrollPhysics(), // Disable scrolling otherwise
-                    child: Column( // Use a Column for the actual drawer content
-                      children: [
-                        // Handle for dragging the drawer
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Center(
-                            child: Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Date and Time
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "3:24 Thu, 22 May",
-                                style: TextStyle(fontSize: 14, color: Colors.black87),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.settings, size: 20, color: Colors.black54),
-                                onPressed: () {
-                                  // print("Settings icon tapped in drawer");
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Quick Settings (Wi-Fi, Mobile Data, etc.)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  _buildQuickSettingTile(Icons.wifi, "Wi-Fi", isActive: true, trailingText: "Off"),
-                                  const SizedBox(width: 10),
-                                  _buildQuickSettingTile(Icons.data_usage, "Mobile d..", isActive: true),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  _buildQuickSettingIcon(Icons.search, "Search", isActive: false),
-                                  _buildQuickSettingIcon(Icons.volume_off, "Mute", isActive: true),
-                                  _buildQuickSettingIcon(Icons.bluetooth, "Bluetooth", isActive: false),
-                                  _buildQuickSettingIcon(Icons.flash_on, "Flash", isActive: false),
-                                  _buildQuickSettingIcon(Icons.location_on, "Location", isActive: false),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Brightness Slider
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.wb_sunny_outlined, color: Colors.grey),
-                              Expanded(
-                                child: Slider(
-                                  value: 0.5,
-                                  min: 0,
-                                  max: 1,
-                                  onChanged: (value) {
-                                    // print("Brightness: $value");
-                                  },
-                                  activeColor: Colors.blue,
-                                  inactiveColor: Colors.grey[300],
-                                ),
-                              ),
-                              const Icon(Icons.wb_sunny, color: Colors.grey),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Silent notifications section
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Silent notifications",
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  // print("Dismiss silent notifications");
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.close, size: 16, color: Colors.black54),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Notifications (example list)
-                        _buildNotificationTile(
-                          Icons.settings,
-                          "System UI",
-                          "USB tethering turned on",
-                          "0s",
-                        ),
-                        const SizedBox(height: 8),
-                        _buildNotificationTile(
-                          Icons.charging_station,
-                          "System UI",
-                          "Charging Complete",
-                          "31m",
-                        ),
-                        const SizedBox(height: 8),
-                        _buildNotificationTile(
-                          Icons.android_outlined,
-                          "System UI",
-                          "USB debugging enab...",
-                          "32m",
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Close Button at the bottom
-                        Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: closeDrawer, // Directly call closeDrawer
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, size: 24, color: Colors.black54),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 50),
-                      ],
+                        ? const AlwaysScrollableScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Column(
+                        children: [
+                          _buildTopBar(),
+                          const SizedBox(height: 16),
+                          _buildLargeButtons(),
+                          const SizedBox(height: 24),
+                          _buildQuickSettingsGrid(),
+                          const SizedBox(height: 24),
+                          _buildBrightnessControl(),
+                          const SizedBox(height: 16),
+                          _buildBottomButtons(),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -316,136 +171,275 @@ class NotificationDrawerState extends State<NotificationDrawer> {
     );
   }
 
-  // Helper methods remain the same
-  Widget _buildQuickSettingTile(IconData icon, String title, {bool isActive = false, String? trailingText}) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          // print("$title tapped!");
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isActive ? Colors.blue[600] : Colors.grey[200],
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(
-                    icon,
-                    color: isActive ? Colors.white : Colors.black87,
-                    size: 20,
-                  ),
-                  const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(
-                  color: isActive ? Colors.white : Colors.black87,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (trailingText != null)
-                Text(
-                  trailingText,
-                  style: TextStyle(
-                    color: isActive ? Colors.white70 : Colors.grey[600],
-                    fontSize: 10,
-                  ),
-                ),
-            ],
-          ),
+  Widget _buildTopBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.edit_outlined, color: Colors.black54),
+          onPressed: () {},
         ),
-      ),
+        IconButton(
+          icon: const Icon(Icons.power_settings_new, color: Colors.black54),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: const Icon(Icons.settings, color: Colors.black54),
+          onPressed: () {},
+        ),
+      ],
     );
   }
 
-  Widget _buildQuickSettingIcon(IconData icon, String tooltip, {bool isActive = false}) {
+  Widget _buildLargeButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildLargeButton(
+            icon: Icons.wifi,
+            title: 'WiFi',
+            subtitle: 'callnections', // From image
+            isActive: _wifiEnabled,
+            onTap: () => setState(() => _wifiEnabled = !_wifiEnabled),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildLargeButton(
+            icon: Icons.bluetooth,
+            title: 'Bluetooth',
+            isActive: _bluetoothEnabled,
+            onTap: () => setState(() => _bluetoothEnabled = !_bluetoothEnabled),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLargeButton({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () {
-        // print("$tooltip icon tapped!");
-      },
+      onTap: onTap,
       child: Container(
-        width: 50,
-        height: 50,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isActive ? Colors.blue[600] : Colors.grey[200],
-          shape: BoxShape.circle,
+          color: isActive ? Colors.blue[600] : Colors.grey[300],
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.white : Colors.black87,
-          size: 24,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: isActive ? Colors.white : Colors.black87, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: isActive ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            if (subtitle != null)
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: isActive ? Colors.white70 : Colors.grey[700],
+                  fontSize: 12,
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNotificationTile(IconData icon, String appName, String message, String time) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildQuickSettingsGrid() {
+    final settings = [
+      {'icon': Icons.volume_up_outlined, 'label': 'Sound', 'state': _soundMode, 'onTap': () => setState(() => _soundMode = !_soundMode)},
+      {'icon': Icons.screen_rotation_outlined, 'label': 'Rotate', 'state': _autoRotate, 'onTap': () => setState(() => _autoRotate = !_autoRotate)},
+      {'icon': Icons.airplanemode_active_outlined, 'label': 'Airplane', 'state': _airplaneMode, 'onTap': () => setState(() => _airplaneMode = !_airplaneMode)},
+      {'icon': Icons.flashlight_on_outlined, 'label': 'Flashlight', 'state': _flashlight, 'onTap': () => setState(() => _flashlight = !_flashlight)},
+      {'icon': Icons.data_usage_outlined, 'label': 'Mobile data', 'state': _mobileData, 'onTap': () => setState(() => _mobileData = !_mobileData)},
+      {'icon': Icons.power_settings_new_outlined, 'label': 'Power saving', 'state': _powerSaving, 'onTap': () => setState(() => _powerSaving = !_powerSaving)},
+      {'icon': Icons.location_on_outlined, 'label': 'Location', 'state': _location, 'onTap': () => setState(() => _location = !_location)},
+      {'icon': Icons.wifi_tethering, 'label': 'Hotspot', 'state': _mobileHotspot, 'onTap': () => setState(() => _mobileHotspot = !_mobileHotspot)},
+      {'icon': Icons.devices_outlined, 'label': 'Link to PC', 'state': _linkToWindows, 'onTap': () => setState(() => _linkToWindows = !_linkToWindows)},
+      {'icon': Icons.fiber_manual_record_outlined, 'label': 'Recorder', 'state': _screenRecorder, 'onTap': () => setState(() => _screenRecorder = !_screenRecorder)},
+      {'icon': Icons.share_outlined, 'label': 'Quick Share', 'state': _quickShare, 'onTap': () => setState(() => _quickShare = !_quickShare)},
+      {'icon': Icons.notifications_off_outlined, 'label': 'Do not disturb', 'state': _dnd, 'onTap': () => setState(() => _dnd = !_dnd)},
+    ];
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(4, (index) => Expanded(child: _buildGridItem(settings[index]))),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(4, (index) => Expanded(child: _buildGridItem(settings[index + 4]))),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(4, (index) => Expanded(child: _buildGridItem(settings[index + 8]))),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridItem(Map<String, dynamic> item) {
+    bool isActive = item['state'];
+    return GestureDetector(
+      onTap: item['onTap'],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: isActive ? Colors.blue[600] : Colors.grey[300],
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.blue[700], size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  appName,
-                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Colors.black87),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  message,
-                  style: const TextStyle(fontSize: 14, color: Colors.black87),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            child: Icon(
+              item['icon'],
+              color: isActive ? Colors.white : Colors.black87,
+              size: 24,
             ),
           ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                time,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey),
-            ],
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+            child: Text(
+              item['label'],
+              style: const TextStyle(fontSize: 11, color: Colors.black87),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBrightnessControl() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Slider(
+            value: _brightnessValue,
+            onChanged: (value) => setState(() => _brightnessValue = value),
+            activeColor: Colors.blue[700],
+            inactiveColor: Colors.grey[400],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildBrightnessOptionButton(
+                Icons.nightlight_outlined,
+                'Eye comfort shield',
+                _eyeComfortShield,
+                () => setState(() => _eyeComfortShield = !_eyeComfortShield)
+              ),
+              const SizedBox(width: 8),
+              _buildBrightnessOptionButton(
+                Icons.dark_mode_outlined,
+                'Dark mode',
+                _darkMode,
+                () => setState(() => _darkMode = !_darkMode)
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBrightnessOptionButton(IconData icon, String text, bool isActive, VoidCallback onTap) {
+    return Expanded(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Material(
+          color: isActive ? Colors.blue.withOpacity(0.2) : Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 20, color: isActive ? Colors.blue[800] : Colors.black87),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      text,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isActive ? Colors.blue[800] : Colors.black87,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomButtons() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildTextButton('Smart View', false, () {}),
+          _buildTextButton('Device control', false, () {}),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTextButton(String text, bool isActive, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isActive ? Colors.blue.withOpacity(0.2) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isActive ? Colors.blue[800] : Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
       ),
     );
   }
