@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:taskbot2/phone_mockup/clickable_outline.dart';
-
 class ResetOptionScreen extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onNavigateToResetMobileNetwork;
   final void Function(BuildContext, Widget) showMockupDialog;
   final void Function(String) showMockupToast;
   final VoidCallback dismissMockupDialog;
-  final GlobalKey<ClickableOutlineState>? resetMobileNetworkKey;
-  final GlobalKey<ClickableOutlineState>? resetBluetoothWifiKey;
-  final GlobalKey<ClickableOutlineState>? resetAppPreferencesKey;
-  final GlobalKey<ClickableOutlineState>? eraseAllDataKey;
 
   const ResetOptionScreen({
     super.key,
@@ -20,10 +14,6 @@ class ResetOptionScreen extends StatelessWidget {
     required this.showMockupDialog,
     required this.showMockupToast,
     required this.dismissMockupDialog,
-    this.resetMobileNetworkKey,
-    this.resetBluetoothWifiKey,
-    this.resetAppPreferencesKey,
-    this.eraseAllDataKey,
   });
 
   // Function to show the reset dialog
@@ -112,40 +102,27 @@ class ResetOptionScreen extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final option = resetOptions[index];
-            VoidCallback action;
-            GlobalKey<ClickableOutlineState>? itemKey;
-
-            if (option == 'Reset Mobile Network Settings') {
-              action = onNavigateToResetMobileNetwork;
-              itemKey = resetMobileNetworkKey;
-            } else if (option == 'Reset Bluetooth & Wi-Fi') {
-              action = () => _showResetDialog(context);
-              itemKey = resetBluetoothWifiKey;
-            } else if (option == 'Reset app preferences') {
-              action = () => print('$option tapped');
-              itemKey = resetAppPreferencesKey;
-            } else if (option == 'Erase all data (factory reset)') {
-              action = () => print('$option tapped');
-              itemKey = eraseAllDataKey;
-            } else {
-              action = () => print('$option tapped');
-            }
-
-            return ClickableOutline(
-              key: itemKey,
-              action: action,
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 24.0, vertical: 12.0),
-                title: Text(
-                  option,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
+            return ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              title: Text(
+                option,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
                 ),
-                onTap: action, // Keep onTap for direct interaction
               ),
+              onTap: () {
+                if (option == 'Reset Mobile Network Settings') {
+                  onNavigateToResetMobileNetwork();
+                } else if (option == 'Reset Bluetooth & Wi-Fi') {
+                  // Show the dialog for this option
+                  _showResetDialog(context);
+                } else {
+                  print('$option tapped');
+                  // Potentially handle other options here
+                }
+              },
             );
           },
         ),

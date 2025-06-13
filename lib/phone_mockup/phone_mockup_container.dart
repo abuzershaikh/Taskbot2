@@ -22,7 +22,6 @@ import 'internal_toast.dart';
 import 'apps1.dart';
 import 'app_management_screen.dart';
 import 'system_app_screen.dart'; // Import the system apps screen
-import 'package:taskbot2/keyboard/keyboard_view.dart';
 
 // Enum to manage the current view being displayed in the phone mockup
 enum CurrentScreenView {
@@ -68,11 +67,6 @@ class PhoneMockupContainer extends StatefulWidget {
 class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   final GlobalKey<NotificationDrawerState> _drawerKey =
       GlobalKey<NotificationDrawerState>();
-
-  // Keyboard visibility state
-  bool _isKeyboardVisible = false;
-  TextEditingController? _keyboardTextController;
-  VoidCallback? _currentSearchCallback; // Added for search callback
 
   CurrentScreenView _currentScreenView = CurrentScreenView.appGrid;
   Map<String, String>?
@@ -130,16 +124,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   final GlobalKey<ClickableOutlineState> _specialAppAccessKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _appLockKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _dualAppsKey = GlobalKey();
-
-  // --- SystemSettingsScreen Keys ---
-  final GlobalKey<ClickableOutlineState> _systemSettingsResetOptionsKey = GlobalKey();
-
-  // --- ResetOptionScreen Keys ---
-  final GlobalKey<ClickableOutlineState> _resetMobileNetworkKey = GlobalKey();
-  final GlobalKey<ClickableOutlineState> _resetBluetoothWifiKey = GlobalKey();
-  final GlobalKey<ClickableOutlineState> _resetAppPreferencesKey = GlobalKey();
-  final GlobalKey<ClickableOutlineState> _eraseAllDataKey = GlobalKey();
-
 
   void dismissDialog() {
     setState(() {
@@ -391,7 +375,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
-          resetOptionsKey: _systemSettingsResetOptionsKey,
         );
         break;
       case CurrentScreenView.resetOptions: // New case for ResetOptionScreen
@@ -411,10 +394,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           showMockupDialog: _showDialog, // Pass the _showDialog method
           showMockupToast: showInternalToast, // Pass the showInternalToast method
           dismissMockupDialog: dismissDialog, // Pass the dismissDialog method
-          resetMobileNetworkKey: _resetMobileNetworkKey,
-          resetBluetoothWifiKey: _resetBluetoothWifiKey,
-          resetAppPreferencesKey: _resetAppPreferencesKey,
-          eraseAllDataKey: _eraseAllDataKey,
         );
         break;
       case CurrentScreenView.resetMobileNetworkSettings: // New case
@@ -445,31 +424,14 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             'PhoneMockupContainer: App for programmatic long press "$appName" not found.');
       }
     } else if (cmd.startsWith('tap ')) {
-      final itemName = cmd.substring('tap '.length).trim();
-      // Check if it's a settings item first
-      if (_currentScreenView == CurrentScreenView.systemSettings && itemName == 'reset options') {
-        triggerSystemResetOptionsOutline();
-      } else if (_currentScreenView == CurrentScreenView.resetOptions) {
-        if (itemName == 'reset mobile network settings') {
-          triggerResetMobileNetworkOutline();
-        } else if (itemName == 'reset bluetooth & wi-fi') {
-          triggerResetBluetoothWifiOutline();
-        } else if (itemName == 'reset app preferences') {
-          triggerResetAppPreferencesOutline();
-        } else if (itemName == 'erase all data (factory reset)') {
-          triggerEraseAllDataOutline();
-        } else {
-          _handleAppTap(itemName); // Fallback to app tap if not a specific settings item
-        }
-      } else {
-        _handleAppTap(itemName); // General app tap
-      }
+      final appName = cmd.substring('tap '.length).trim();
+      _handleAppTap(appName);
     } else if (cmd.contains('back')) {
       // Prioritize programmatic back if available for the current screen
       if (_currentScreenView == CurrentScreenView.appInfo) {
-        triggerAppInfoBackButtonAction();
+        await triggerAppInfoBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.clearData) {
-        triggerClearDataBackButtonAction();
+        await triggerClearDataBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.connectionSharing ||
           _currentScreenView == CurrentScreenView.apps1) {
         setState(() {
@@ -631,101 +593,26 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     }
   }
 
-  void triggerAppInfoStorageCacheAction() =>
-      _appInfoStorageCacheButtonKey.currentState?.triggerOutlineAndAction();
-  void triggerAppInfoBackButtonAction() =>
-      _appInfoBackButtonKey.currentState?.triggerOutlineAndAction();
-  void triggerClearDataButtonAction() =>
-      _clearDataClearDataButtonKey.currentState?.triggerOutlineAndAction();
-  void triggerClearCacheButtonAction() =>
-      _clearDataClearCacheButtonKey.currentState?.triggerOutlineAndAction();
-  void triggerClearDataBackButtonAction() =>
-      _clearDataBackButtonKey.currentState?.triggerOutlineAndAction();
-  void triggerDialogAppInfoAction() =>
-      _appActionDialogAppInfoKey.currentState?.triggerOutlineAndAction();
-  void triggerDialogUninstallAction() =>
-      _appActionDialogUninstallKey.currentState?.triggerOutlineAndAction();
-  void triggerDialogClearDataConfirmAction() =>
-      _clearDataDialogConfirmKey.currentState?.triggerOutlineAndAction();
-  void triggerDialogClearDataCancelAction() =>
-      _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
-
-  // --- Methods to trigger outlines for SystemSettingsScreen and ResetOptionScreen ---
-  void triggerSystemResetOptionsOutline() =>
-      _systemSettingsResetOptionsKey.currentState?.triggerOutlineAndAction();
-  void triggerResetMobileNetworkOutline() =>
-      _resetMobileNetworkKey.currentState?.triggerOutlineAndAction();
-  void triggerResetBluetoothWifiOutline() =>
-      _resetBluetoothWifiKey.currentState?.triggerOutlineAndAction();
-  void triggerResetAppPreferencesOutline() =>
-      _resetAppPreferencesKey.currentState?.triggerOutlineAndAction();
-  void triggerEraseAllDataOutline() =>
-      _eraseAllDataKey.currentState?.triggerOutlineAndAction();
-
-  // --- Stubs for Settings/Reset Actions ---
-
-  Future<void> triggerSettingsSystemAction() async {
-    print("PhoneMockupContainerState: triggerSettingsSystemAction called.");
-    setState(() {
-      // This action should navigate from the main Settings screen to the "System" sub-screen.
-      _currentScreenView = CurrentScreenView.systemSettings;
-      _updateCurrentScreenWidget(); // Ensure the UI updates to show the System settings screen
-    });
-    await Future.delayed(const Duration(milliseconds: 200)); // Simulate transition
-    print("PhoneMockupContainerState: Navigated to System Settings screen.");
-  }
-
-  Future<void> triggerSystemResetOptionsAction() async {
-    print("PhoneMockupContainerState: triggerSystemResetOptionsAction called.");
-    setState(() {
-      // This action should navigate from "System" settings to "Reset options".
-      _currentScreenView = CurrentScreenView.resetOptions;
-      _updateCurrentScreenWidget(); // Ensure UI updates
-    });
-    await Future.delayed(const Duration(milliseconds: 200)); // Simulate transition
-    print("PhoneMockupContainerState: Navigated to Reset Options screen.");
-  }
-
-  Future<void> triggerResetMobileNetworkSettingsAction() async {
-    print("PhoneMockupContainerState: triggerResetMobileNetworkSettingsAction called.");
-    setState(() {
-      // This action should navigate from "Reset options" to "Reset mobile network settings".
-      _currentScreenView = CurrentScreenView.resetMobileNetworkSettings;
-      _updateCurrentScreenWidget(); // Ensure UI updates
-    });
-    await Future.delayed(const Duration(milliseconds: 250)); // Simulate transition/dialog appearance
-    print("PhoneMockupContainerState: Navigated to Reset Mobile Network Settings screen/dialog.");
-  }
-
-  Future<void> triggerConfirmResetNetworkAction() async {
-    print("PhoneMockupContainerState: triggerConfirmResetNetworkAction called (first confirmation).");
-    // This might show another confirmation dialog or just proceed.
-    // For now, just log and delay. If it shows a dialog, a real implementation would set _activeDialog.
-    setState(() {
-      // Potentially update a state variable if the UI changes, e.g., to show a spinner or second dialog
-      print("PhoneMockupContainerState: First network reset confirmation processed.");
-    });
-    await Future.delayed(const Duration(milliseconds: 300)); // Simulate action
-  }
-
-  Future<void> triggerFinalConfirmResetNetworkAction() async {
-    print("PhoneMockupContainerState: triggerFinalConfirmResetNetworkAction called (final confirmation).");
-    // This is the final step. It would perform the reset and likely navigate away or show a toast.
-    setState(() {
-      // After reset, it might navigate back to a general settings screen or show a toast.
-      // For now, we'll just log the action completion.
-      // A real implementation might call showInternalToast("Network settings have been reset.");
-      // And potentially navigate: _currentScreenView = CurrentScreenView.settings; _updateCurrentScreenWidget();
-      print("PhoneMockupContainerState: Final network reset confirmation processed. Network should be 'reset'.");
-    });
-    await Future.delayed(const Duration(milliseconds: 1000)); // Simulate longer action for reset
-    // After reset, the actual OS often returns to a general settings page or the specific reset options page.
-    // Let's simulate returning to Reset Options for now, as the simulator will navigate away after this.
-    // setState(() {
-    //   _currentScreenView = CurrentScreenView.resetOptions;
-    //  _updateCurrentScreenWidget();
-    // });
-  }
+  Future<void> triggerAppInfoStorageCacheAction() async =>
+      await _appInfoStorageCacheButtonKey.currentState
+          ?.triggerOutlineAndAction();
+  Future<void> triggerAppInfoBackButtonAction() async =>
+      await _appInfoBackButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerClearDataButtonAction() async =>
+      await _clearDataClearDataButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerClearCacheButtonAction() async =>
+      await _clearDataClearCacheButtonKey.currentState
+          ?.triggerOutlineAndAction();
+  Future<void> triggerClearDataBackButtonAction() async =>
+      await _clearDataBackButtonKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogAppInfoAction() async =>
+      await _appActionDialogAppInfoKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogUninstallAction() async =>
+      await _appActionDialogUninstallKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogClearDataConfirmAction() async =>
+      await _clearDataDialogConfirmKey.currentState?.triggerOutlineAndAction();
+  Future<void> triggerDialogClearDataCancelAction() async =>
+      await _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
 
   void simulateClearDataClick() {
     if (_currentAppDetails != null) {
@@ -781,24 +668,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     setState(() {
       _activeDialog = dialogContent;
       _isBlurred = true;
-    });
-  }
-
-  // Method to show the keyboard
-  void showKeyboard(TextEditingController controller, {VoidCallback? onSearch}) {
-    setState(() {
-      _keyboardTextController = controller;
-      _currentSearchCallback = onSearch; // Store the search callback
-      _isKeyboardVisible = true;
-    });
-  }
-
-  // Method to hide the keyboard
-  void hideKeyboard() {
-    setState(() {
-      _keyboardTextController = null;
-      _currentSearchCallback = null; // Clear the search callback
-      _isKeyboardVisible = false;
     });
   }
 
@@ -895,22 +764,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                 ),
               ),
             NotificationDrawer(key: _drawerKey),
-
-            // Add Keyboard conditionally
-            if (_isKeyboardVisible)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Material( // Wrap KeyboardView in Material for theming and correct rendering
-                  type: MaterialType.transparency, // Or specific color if needed
-                  child: KeyboardView(
-                    textEditingController: _keyboardTextController ?? TextEditingController(),
-                    focusNode: FocusNode(),
-                    onSearchPressed: _currentSearchCallback, // Pass the stored callback
-                  ),
-                ),
-              ),
           ],
         ),
       ),
