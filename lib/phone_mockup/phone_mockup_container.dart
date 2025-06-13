@@ -826,5 +826,12 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     );
   }
 
-  Future<void> triggerSettingsScrollToEnd() async {}
+  Future<void> triggerSettingsScrollToEnd() async {
+  final settingsState = _settingsScreenKey.currentState;
+  if (settingsState != null) {
+    await settingsState.scrollToEnd();
+  } else {
+    print("Error: SettingsScreen state not found, cannot scroll to end.");
+  }
+}
 }
