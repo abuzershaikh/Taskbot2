@@ -1,42 +1,42 @@
-// File: tool_drawer.dart
+// lib/tool_drawer.dart
 import 'app_automation_simulator.dart';
 import 'package:flutter/material.dart';
-import 'phone_mockup/app_grid.dart'; // Import for AppGridState
-import 'phone_mockup/phone_mockup_container.dart'; // Import for PhoneMockupContainerState
+import 'phone_mockup/app_grid.dart';
+import 'phone_mockup/phone_mockup_container.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:path/path.dart' as p; // Added for path manipulation
+import 'package:path/path.dart' as p;
 import 'phone_mockup/wallpaper_settings.dart';
 
 class ToolDrawer extends StatefulWidget {
   final File? pickedImage;
   final Function(File?) onImageChanged;
-  final Function(File?) onFrameImageChanged; // New callback for frame image
+  final Function(File?) onFrameImageChanged;
   final Function(double, double) onImagePan;
   final Function(double) onImageScale;
   final VoidCallback onClose;
   final double currentImageScale;
-  final GlobalKey<PhoneMockupContainerState> phoneMockupKey; // NEW
-  final GlobalKey<AppGridState> appGridKey; // NEW
+  final GlobalKey<PhoneMockupContainerState> phoneMockupKey;
+  final GlobalKey<AppGridState> appGridKey;
   final Function(File?) onWallpaperChanged;
   final VoidCallback onRemoveWallpaper;
   final File? currentWallpaper;
-  final Function(File?) onMockupWallpaperChanged; // Added new callback
+  final Function(File?) onMockupWallpaperChanged;
 
   const ToolDrawer({
     super.key,
     required this.pickedImage,
     required this.onImageChanged,
-    required this.onFrameImageChanged, // New callback for frame image
+    required this.onFrameImageChanged,
     required this.onImagePan,
     required this.onImageScale,
     required this.onClose,
     required this.currentImageScale,
-    required this.phoneMockupKey, // NEW
-    required this.appGridKey, // NEW
+    required this.phoneMockupKey,
+    required this.appGridKey,
     required this.onWallpaperChanged,
     required this.onRemoveWallpaper,
-    required this.onMockupWallpaperChanged, // Added to constructor
+    required this.onMockupWallpaperChanged,
     this.currentWallpaper,
   });
 
@@ -47,7 +47,7 @@ class ToolDrawer extends StatefulWidget {
 class ToolDrawerState extends State<ToolDrawer> {
   late TextEditingController _commandController;
   late AppAutomationSimulator _appAutomationSimulator;
-  bool _isSimulationRunning = false; // New state variable
+  bool _isSimulationRunning = false;
 
   @override
   void initState() {
@@ -65,54 +65,54 @@ class ToolDrawerState extends State<ToolDrawer> {
     super.dispose();
   }
 
-  // Method to parse the command
   Map<String, String>? _parseCommand(String command) {
-    final lowerCaseCommand = command.toLowerCase();
-    if (lowerCaseCommand.contains('clear data')) {
-      // Find the index of "clear data"
-      final clearDataIndex = lowerCaseCommand.indexOf('clear data');
-      if (clearDataIndex > 0) { // Ensure "clear data" is not at the beginning
+    final lowerCaseCommand = command.toLowerCase().trim();
+    final clearDataKeyword = 'clear data';
+    final resetNetworkKeyword = 'reset network';
+
+    if (lowerCaseCommand.contains(clearDataKeyword)) {
+      final clearDataIndex = lowerCaseCommand.indexOf(clearDataKeyword);
+      if (clearDataIndex > 0) {
         final appName = command.substring(0, clearDataIndex).trim();
         if (appName.isNotEmpty) {
-          return {'appName': appName, 'action': 'clearData'};
+          return {'appName': appName, 'action': 'clearDataAndResetNetwork'};
         }
       }
+    } else if (lowerCaseCommand == resetNetworkKeyword) {
+      return {'action': 'resetNetworkOnly'};
     }
     return null;
   }
 
-  // Function to pick an image from the gallery
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      widget.onImageChanged(File(image.path)); // Notify parent
-      widget.onClose(); // Close drawer after action
+      widget.onImageChanged(File(image.path));
+      widget.onClose();
     }
   }
 
-  // Function to dismiss the image
   void _dismissImage() {
-    widget.onImageChanged(null); // Notify parent
-    widget.onClose(); // Close drawer after action
+    widget.onImageChanged(null);
+    widget.onClose();
   }
 
   Future<void> _pickIcons() async {
     final ImagePicker picker = ImagePicker();
-    // Pick multiple images
     final List<XFile> pickedFiles = await picker.pickMultipleMedia();
 
     if (pickedFiles.isNotEmpty) {
       List<Map<String, String>> newIcons = [];
       for (var file in pickedFiles) {
         if (newIcons.length >= 50) {
-          if (mounted) { // Check if the widget is still in the tree
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Processing the first 50 selected icons.")),
             );
           }
-          break; // Limit to 50 icons
+          break;
         }
         String iconName = p.basenameWithoutExtension(file.path);
         newIcons.add({'name': iconName, 'icon': file.path});
@@ -120,39 +120,37 @@ class ToolDrawerState extends State<ToolDrawer> {
 
       if (newIcons.isNotEmpty) {
         widget.appGridKey.currentState?.addIcons(newIcons);
-        widget.onClose(); // Close drawer after action
+        widget.onClose();
       }
     }
   }
 
-  // Function to pick a frame image from the gallery
   Future<void> _pickFrameImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      widget.onFrameImageChanged(File(image.path)); // Notify parent
-      widget.onClose(); // Close drawer after action
+      widget.onFrameImageChanged(File(image.path));
+      widget.onClose();
     }
   }
 
-  // Function to dismiss the frame image
   void _dismissFrameImage() {
-    widget.onFrameImageChanged(null); // Notify parent
-    widget.onClose(); // Close drawer after action
+    widget.onFrameImageChanged(null);
+    widget.onClose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent, // Make Material transparent
+      color: Colors.transparent,
       child: Align(
-        alignment: Alignment.centerRight, // Align drawer to the right
+        alignment: Alignment.centerRight,
         child: Container(
-          width: 200, // Width of your tool drawer
-          height: double.infinity, // Take full height
+          width: 200,
+          height: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9), // Semi-transparent white background
+            color: Colors.white.withOpacity(0.9),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(15),
               bottomLeft: Radius.circular(15),
@@ -161,76 +159,72 @@ class ToolDrawerState extends State<ToolDrawer> {
               BoxShadow(
                 color: Colors.black.withOpacity(0.2),
                 blurRadius: 10,
-                offset: const Offset(-5, 0), // Shadow on the left side
+                offset: const Offset(-5, 0),
               ),
             ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Tools',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Tools',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const Divider(height: 30, thickness: 1),
-                ElevatedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('Add Image'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                if (widget.pickedImage != null)
+                  const Divider(height: 30, thickness: 1),
                   ElevatedButton.icon(
-                    onPressed: _dismissImage,
-                    icon: const Icon(Icons.delete),
-                    label: const Text('Remove Image'),
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.add_photo_alternate),
+                    label: const Text('Add Image'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       textStyle: const TextStyle(fontSize: 16),
-                      backgroundColor: Colors.red,
                     ),
                   ),
-                const SizedBox(height: 10), // Spacing before new buttons
-                // New buttons for Frame
-                ElevatedButton.icon(
-                  onPressed: _pickFrameImage,
-                  icon: const Icon(Icons.filter_hdr_outlined), // Or similar
-                  label: const Text('Import Frame'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
+                  const SizedBox(height: 10),
+                  if (widget.pickedImage != null)
+                    ElevatedButton.icon(
+                      onPressed: _dismissImage,
+                      icon: const Icon(Icons.delete),
+                      label: const Text('Remove Image'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        textStyle: const TextStyle(fontSize: 16),
+                        backgroundColor: Colors.red,
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _pickFrameImage,
+                    icon: const Icon(Icons.filter_hdr_outlined),
+                    label: const Text('Import Frame'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: _dismissFrameImage,
-                  icon: const Icon(Icons.delete_outline), // Or similar
-                  label: const Text('Remove Frame'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                    backgroundColor: Colors.redAccent, // Slightly different red
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _dismissFrameImage,
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Remove Frame'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                      backgroundColor: Colors.redAccent,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10), // Add some spacing
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Close the drawer first
-                    widget.onClose();
-                    // Navigate to WallpaperSettingsScreen
-                    // Ensure context is available and mounted before navigating
-                    if (context.mounted) {
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      widget.onClose();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -241,139 +235,137 @@ class ToolDrawerState extends State<ToolDrawer> {
                           ),
                         ),
                       );
-                    }
-                  },
-                  icon: const Icon(Icons.wallpaper),
-                  label: const Text('Change Wallpaper'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // New buttons for Mockup Wallpaper
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
-                      widget.onMockupWallpaperChanged(File(image.path));
-                    }
-                    widget.onClose();
-                  },
-                  icon: const Icon(Icons.photo_size_select_actual_outlined),
-                  label: const Text('Set Mockup WP'), // Shorter label
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    widget.onMockupWallpaperChanged(null);
-                    widget.onClose();
-                  },
-                  icon: const Icon(Icons.hide_image_outlined),
-                  label: const Text('Remove Mockup WP'), // Shorter label
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    textStyle: const TextStyle(fontSize: 16),
-                    backgroundColor: Colors.orangeAccent, // Different color for remove
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: _pickIcons,
-                icon: const Icon(Icons.upload_file), // Or Icons.add_photo_alternate_multiple_outline
-                label: const Text('Upload Icons'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-              ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Image Controls:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Scale:'),
-                    SizedBox(
-                      width: 100, // Give it a fixed width
-                      child: Slider(
-                        value: widget.currentImageScale, // FIX: Use the actual current scale
-                        min: 0.1,
-                        max: 5.0,
-                        divisions: 49,
-                        onChanged: (double value) {
-                          widget.onImageScale(value); // FIX: Call the parent's scale callback
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => widget.onImagePan(-10.0, 0.0), // Move left
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: () => widget.onImagePan(10.0, 0.0), // Move right
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_upward),
-                      onPressed: () => widget.onImagePan(0.0, -10.0), // Move up
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_downward),
-                      onPressed: () => widget.onImagePan(0.0, 10.0), // Move down
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20), // Spacing before command input
-                const Text(
-                  'Command Input:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: TextField(
-                    controller: _commandController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Enter command',
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: ElevatedButton(
-                    onPressed: _isSimulationRunning ? null : _handleRunCommand, // Updated onPressed
+                    },
+                    icon: const Icon(Icons.wallpaper),
+                    label: const Text('Change Wallpaper'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       textStyle: const TextStyle(fontSize: 16),
-                      backgroundColor: _isSimulationRunning ? Colors.grey : null, // Optional: visual feedback
                     ),
-                    child: Text(_isSimulationRunning ? 'Simulating...' : 'Run Command'), // Updated text
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) {
+                        widget.onMockupWallpaperChanged(File(image.path));
+                      }
+                      widget.onClose();
+                    },
+                    icon: const Icon(Icons.photo_size_select_actual_outlined),
+                    label: const Text('Set Mockup WP'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      widget.onMockupWallpaperChanged(null);
+                      widget.onClose();
+                    },
+                    icon: const Icon(Icons.hide_image_outlined),
+                    label: const Text('Remove Mockup WP'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                      backgroundColor: Colors.orangeAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _pickIcons,
+                    icon: const Icon(Icons.upload_file),
+                    label: const Text('Upload Icons'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const Divider(height: 30, thickness: 1),
+                  const Text(
+                    'Image Controls:',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Scale:'),
+                      SizedBox(
+                        width: 100,
+                        child: Slider(
+                          value: widget.currentImageScale,
+                          min: 0.1,
+                          max: 5.0,
+                          divisions: 49,
+                          onChanged: widget.onImageScale,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => widget.onImagePan(-10.0, 0.0),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () => widget.onImagePan(10.0, 0.0),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_upward),
+                        onPressed: () => widget.onImagePan(0.0, -10.0),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_downward),
+                        onPressed: () => widget.onImagePan(0.0, 10.0),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 30, thickness: 1),
+                  const Text(
+                    'Command Input:',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: TextField(
+                      controller: _commandController,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Enter command',
+                        isDense: true,
+                      ),
+                      onSubmitted: (_) => _handleRunCommand(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton(
+                      onPressed: _isSimulationRunning ? null : _handleRunCommand,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        textStyle: const TextStyle(fontSize: 16),
+                        backgroundColor: _isSimulationRunning ? Colors.grey : null,
+                      ),
+                      child: Text(_isSimulationRunning ? 'Simulating...' : 'Run Command'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -383,7 +375,6 @@ class ToolDrawerState extends State<ToolDrawer> {
 
   Future<void> _handleRunCommand() async {
     if (_isSimulationRunning) {
-      // Optional: Show a SnackBar if trying to run while already running
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -405,67 +396,49 @@ class ToolDrawerState extends State<ToolDrawer> {
       final String originalCommandText = _commandController.text;
       final String normalizedCommandText = originalCommandText.trim().toLowerCase();
 
-      if (normalizedCommandText == "open settings" || normalizedCommandText == "open_settings" || normalizedCommandText == "open setting") {
+      if (normalizedCommandText == "open settings") {
         widget.onClose();
         await Future.delayed(const Duration(milliseconds: 300));
-        final phoneState = widget.phoneMockupKey.currentState;
-        if (phoneState != null) {
-          phoneState.showSettingsScreen();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text("Opening settings..."),
-              backgroundColor: Colors.green,
-            ));
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text("Error: Could not access phone state."),
-              backgroundColor: Colors.red,
-            ));
-          }
-        }
+        widget.phoneMockupKey.currentState?.showSettingsScreen();
       } else {
-        // Existing logic for other commands (e.g., clear data)
-        final parsedCommand = _parseCommand(originalCommandText); // Use original text
+        final parsedCommand = _parseCommand(originalCommandText);
 
         if (parsedCommand != null) {
-          final appName = parsedCommand['appName'];
           final action = parsedCommand['action'];
+          widget.onClose();
+          await Future.delayed(const Duration(milliseconds: 300));
 
-          if (action == 'clearData' && appName != null) {
-            widget.onClose(); // Close the drawer
-            await Future.delayed(const Duration(milliseconds: 300)); // Allow drawer to close
-
-            final bool simulationSucceeded = await _appAutomationSimulator.startClearDataSimulation(appName);
-            
-            if (!simulationSucceeded && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Error: App '$appName' not found or simulation failed."),
-                  backgroundColor: Colors.red,
-                ),
-              );
+          bool simulationSucceeded = false;
+          if (action == 'clearDataAndResetNetwork') {
+            final appName = parsedCommand['appName'];
+            if (appName != null) {
+              simulationSucceeded = await _appAutomationSimulator
+                  .startClearDataAndResetNetworkSimulation(appName);
             }
-          } else {
-            // ignore: avoid_print
-            print('Parsed command: $parsedCommand, but action or appName is invalid for simulation.');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Invalid command format for simulation."),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
+          } else if (action == 'resetNetworkOnly') {
+              final phoneState = widget.phoneMockupKey.currentState;
+              final gridState = widget.appGridKey.currentState;
+              if (phoneState != null && gridState != null) {
+                simulationSucceeded = await _appAutomationSimulator
+                    .startResetNetworkSimulation(phoneState, gridState);
+              } else {
+                  print("Error: Could not get phone or grid state.");
+              }
+          }
+          
+          if (!simulationSucceeded && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Simulation failed. Check console for details."),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
         } else {
-          // ignore: avoid_print
-          print('Unknown command: $originalCommandText');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("Unknown command."), // Updated message
+                content: Text("Unknown command."),
                 backgroundColor: Colors.orange,
               ),
             );

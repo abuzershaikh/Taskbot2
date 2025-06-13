@@ -1,40 +1,49 @@
 // lib/phone_mockup/reset_mobile_network_settings_screen.dart
 import 'package:flutter/material.dart';
-import 'clickable_outline.dart'; // Added import
+import 'clickable_outline.dart';
 
 class ResetMobileNetworkSettingsScreen extends StatefulWidget {
   final VoidCallback onBack;
   final void Function(String message, {Duration duration}) showInternalToast;
+  final GlobalKey<ClickableOutlineState>? resetButtonKey;
 
   const ResetMobileNetworkSettingsScreen({
     super.key,
     required this.onBack,
     required this.showInternalToast,
+    this.resetButtonKey,
   });
 
   @override
   State<ResetMobileNetworkSettingsScreen> createState() =>
-      _ResetMobileNetworkSettingsScreenState();
+      ResetMobileNetworkSettingsScreenState();
 }
 
-class _ResetMobileNetworkSettingsScreenState
+class ResetMobileNetworkSettingsScreenState
     extends State<ResetMobileNetworkSettingsScreen> {
   bool _isConfirmationStep = false;
-  final GlobalKey<ClickableOutlineState> _buttonKey = GlobalKey<ClickableOutlineState>(); // Added key
+  late final GlobalKey<ClickableOutlineState> _buttonKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _buttonKey = widget.resetButtonKey ?? GlobalKey<ClickableOutlineState>();
+  }
+
+  GlobalKey<ClickableOutlineState> getResetButtonKey() {
+      return _buttonKey;
+  }
 
   void _handleReset() {
     if (!_isConfirmationStep) {
-      // First tap: move to confirmation step
       setState(() {
         _isConfirmationStep = true;
       });
     } else {
-      // Second tap: perform reset, show toast, and navigate back
       widget.showInternalToast(
         'Network settings have been reset',
         duration: const Duration(seconds: 2),
       );
-      // Wait for the SnackBar to be visible before navigating back
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           widget.onBack();
@@ -60,7 +69,6 @@ class _ResetMobileNetworkSettingsScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title is always visible
             const Text(
               'Reset Mobile\nNetwork Settings',
               style: TextStyle(
@@ -71,7 +79,6 @@ class _ResetMobileNetworkSettingsScreenState
             ),
             const SizedBox(height: 16),
 
-            // Conditional description text
             if (!_isConfirmationStep)
               const Text(
                 'This will reset all mobile network settings',
@@ -92,17 +99,16 @@ class _ResetMobileNetworkSettingsScreenState
 
             const SizedBox(height: 32),
             Center(
-              child: ClickableOutline( // Wrap ElevatedButton
+              child: ClickableOutline(
                 key: _buttonKey,
                 action: () async {
-                  _handleReset(); // Call the existing handler
+                  _handleReset();
                 },
                 child: ElevatedButton(
-                  onPressed: () { // Modified onPressed
+                  onPressed: () {
                     _buttonKey.currentState?.triggerOutlineAndAction();
                   },
                   style: ElevatedButton.styleFrom(
-                    // Change button color for confirmation step to match screenshot
                     backgroundColor: _isConfirmationStep
                         ? Colors.amber[300]
                         : Colors.deepPurple[50],

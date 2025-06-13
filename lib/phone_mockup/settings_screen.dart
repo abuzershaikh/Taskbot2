@@ -1,4 +1,4 @@
-// File: lib/phone_mockup/settings_screen.dart
+// lib/phone_mockup/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'clickable_outline.dart';
 import 'phone_mockup_container.dart';
@@ -6,16 +6,16 @@ import 'phone_mockup_container.dart';
 class SettingsScreen extends StatefulWidget {
   final VoidCallback onBack;
   final AppItemTapCallback? onSettingItemTap;
+  
   const SettingsScreen({super.key, required this.onBack, this.onSettingItemTap});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-
-  getSettingItemKey(String target) {}
+  State<SettingsScreen> createState() => SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class SettingsScreenState extends State<SettingsScreen> {
   final Map<String, GlobalKey<ClickableOutlineState>> _settingsKeys = {};
+  final ScrollController _scrollController = ScrollController();
 
   final List<Map<String, dynamic>> primarySettingsData = [
     {'icon': Icons.wifi, 'title': 'Wi-Fi', 'trailing': 'Off', 'isToggle': false},
@@ -40,14 +40,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final List<Map<String, dynamic>> moreSettingsData = [
     {'icon': Icons.health_and_safety_outlined, 'title': 'Safety & emergency', 'trailing': null},
     {'icon': Icons.self_improvement_outlined, 'title': 'Digital Wellbeing & parental controls', 'trailing': null},
-    {'icon': Icons.integration_instructions_outlined, 'title': 'Google', 'trailing': null}, // Placeholder for Google 'G'
+    {'icon': Icons.integration_instructions_outlined, 'title': 'Google', 'trailing': null},
     {'icon': Icons.system_update_alt, 'title': 'System updates', 'trailing': null},
     {'icon': Icons.rate_review_outlined, 'title': 'Rating & feedback', 'trailing': null},
     {'icon': Icons.help_outline, 'title': 'Help', 'trailing': null},
     {'icon': Icons.info_outline, 'title': 'System', 'trailing': null},
     {'icon': Icons.phone_android_outlined, 'title': 'About phone', 'trailing': null},
   ];
-
 
   @override
   void initState() {
@@ -57,6 +56,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _initializeKeysForList(appSecuritySettingsData);
     _initializeKeysForList(moreSettingsData);
   }
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
 
   void _initializeKeysForList(List<Map<String, dynamic>> list) {
     for (var item in list) {
@@ -64,6 +70,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  GlobalKey<ClickableOutlineState>? getSettingItemKey(String title) {
+    return _settingsKeys[title];
+  }
+
+  Future<void> scrollToEnd() async {
+    // Retry mechanism to ensure the scroll controller is attached before use.
+    int retries = 5;
+    while (retries > 0 && !_scrollController.hasClients) {
+      print("Scroll controller not attached yet, waiting... ($retries retries left)");
+      await Future.delayed(const Duration(milliseconds: 100));
+      retries--;
+    }
+
+    if (!_scrollController.hasClients) {
+      print("Error: ScrollController could not attach to a view. Cannot scroll.");
+      return;
+    }
+    
+    // Animate to the bottom of the scroll view.
+    await _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,28 +102,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
       color: Colors.blueGrey[50],
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: const Text(
-            "Settings",
-            style: TextStyle(color: Colors.black),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: widget.onBack,
-          ),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildSettingsCard(context, primarySettingsData),
-            const SizedBox(height: 16),
-            _buildSettingsCard(context, displaySettingsData),
-            const SizedBox(height: 16),
-            _buildSettingsCard(context, appSecuritySettingsData),
-            const SizedBox(height: 16),
-            _buildSettingsCard(context, moreSettingsData),
+        body: CustomScrollView(
+          controller: _scrollController,
+          slivers: <Widget>[
+            SliverAppBar(
+              title: const Text(
+                "Settings",
+                style: TextStyle(color: Colors.black),
+              ),
+              backgroundColor: Colors.blueGrey[50],
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: widget.onBack,
+              ),
+              pinned: true,
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.all(16.0),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate(
+                  [
+                    _buildSettingsCard(context, primarySettingsData),
+                    const SizedBox(height: 16),
+                    _buildSettingsCard(context, displaySettingsData),
+                    const SizedBox(height: 16),
+                    _buildSettingsCard(context, appSecuritySettingsData),
+                    const SizedBox(height: 16),
+                    _buildSettingsCard(context, moreSettingsData),
+                    // Add a spacer at the end to ensure the list is always scrollable.
+                    const SizedBox(height: 150),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -128,7 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ClickableOutline(
                   key: itemKey!,
                   action: () async {
-                    if (widget.onSettingItemTap != null) { // Removed direct navigation for 'System'
+                    if (widget.onSettingItemTap != null) {
                       Map<String, String> stringItemDetails = {};
                       item.forEach((key, value) {
                         if (key != 'icon') {
@@ -174,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           )
                         : const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                     onTap: () {
-                      itemKey?.currentState?.triggerOutlineAndAction();
+                      itemKey.currentState?.triggerOutlineAndAction();
                     },
                   ),
                 ),

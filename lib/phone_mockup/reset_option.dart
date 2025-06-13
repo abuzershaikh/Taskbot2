@@ -1,5 +1,6 @@
+// lib/phone_mockup/reset_option.dart
 import 'package:flutter/material.dart';
-import 'clickable_outline.dart'; // Import ClickableOutline
+import 'clickable_outline.dart';
 
 class ResetOptionScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -7,6 +8,7 @@ class ResetOptionScreen extends StatefulWidget {
   final void Function(BuildContext, Widget) showMockupDialog;
   final void Function(String) showMockupToast;
   final VoidCallback dismissMockupDialog;
+  final GlobalKey<ClickableOutlineState>? resetMobileNetworkKey;
 
   const ResetOptionScreen({
     super.key,
@@ -15,13 +17,14 @@ class ResetOptionScreen extends StatefulWidget {
     required this.showMockupDialog,
     required this.showMockupToast,
     required this.dismissMockupDialog,
+    this.resetMobileNetworkKey,
   });
 
   @override
-  State<ResetOptionScreen> createState() => _ResetOptionScreenState();
+  State<ResetOptionScreen> createState() => ResetOptionScreenState();
 }
 
-class _ResetOptionScreenState extends State<ResetOptionScreen> {
+class ResetOptionScreenState extends State<ResetOptionScreen> {
   final List<String> resetOptions = [
     'Reset Mobile Network Settings',
     'Reset Bluetooth & Wi-Fi',
@@ -29,7 +32,6 @@ class _ResetOptionScreenState extends State<ResetOptionScreen> {
     'Erase all data (factory reset)',
   ];
 
-  // Map to hold GlobalKeys for each option
   late Map<String, GlobalKey<ClickableOutlineState>> _optionKeys;
 
   @override
@@ -37,11 +39,16 @@ class _ResetOptionScreenState extends State<ResetOptionScreen> {
     super.initState();
     _optionKeys = {
       for (var option in resetOptions)
-        option: GlobalKey<ClickableOutlineState>()
+        option: option == 'Reset Mobile Network Settings' && widget.resetMobileNetworkKey != null
+            ? widget.resetMobileNetworkKey!
+            : GlobalKey<ClickableOutlineState>()
     };
   }
 
-  // Function to show the reset dialog
+  GlobalKey<ClickableOutlineState>? getResetMobileNetworkKey() {
+      return _optionKeys['Reset Mobile Network Settings'];
+  }
+
   void _showResetDialog(BuildContext context) {
     widget.showMockupDialog(
       context,
@@ -53,32 +60,18 @@ class _ResetOptionScreenState extends State<ResetOptionScreen> {
           style: TextStyle(fontSize: 14, color: Colors.black87),
         ),
         actions: <Widget>[
-          Builder(builder: (dialogContext) {
-            return TextButton(
-              child: Text(
-                'CANCEL',
-                style: TextStyle(color: Theme.of(context).primaryColor),
-              ),
-              onPressed: () {
-                widget.dismissMockupDialog(); // Dismiss the dialog
-              },
-            );
-          }),
-          Builder(builder: (dialogContext) {
-            return TextButton(
-              child: Text(
-                'RESET',
-                style: TextStyle(color: Theme.of(context).primaryColor),
-              ),
-              onPressed: () {
-                widget.dismissMockupDialog(); // Dismiss the dialog
-                // Show a toast (SnackBar) message
-                widget.showMockupToast('Wi-Fi & Bluetooth settings have been reset.');
-                print('Resetting Bluetooth & Wi-Fi settings...');
-                // Add actual reset logic here if needed
-              },
-            );
-          }),
+          TextButton(
+            child: Text('CANCEL', style: TextStyle(color: Theme.of(context).primaryColor)),
+            onPressed: widget.dismissMockupDialog,
+          ),
+          TextButton(
+            child: Text('RESET', style: TextStyle(color: Theme.of(context).primaryColor)),
+            onPressed: () {
+              widget.dismissMockupDialog();
+              widget.showMockupToast('Wi-Fi & Bluetooth settings have been reset.');
+              print('Resetting Bluetooth & Wi-Fi settings...');
+            },
+          ),
         ],
       ),
     );
@@ -99,14 +92,6 @@ class _ResetOptionScreenState extends State<ResetOptionScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: widget.onBack,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {
-              // Handle search action
-            },
-          ),
-        ],
       ),
       body: Container(
         color: Colors.white,
@@ -120,18 +105,17 @@ class _ResetOptionScreenState extends State<ResetOptionScreen> {
           ),
           itemBuilder: (context, index) {
             final option = resetOptions[index];
-            final itemKey = _optionKeys[option];
+            final itemKey = _optionKeys[option]!;
 
             return ClickableOutline(
-              key: itemKey!,
-              action: () async { // Ensure action is async
+              key: itemKey,
+              action: () async {
                 if (option == 'Reset Mobile Network Settings') {
                   widget.onNavigateToResetMobileNetwork();
                 } else if (option == 'Reset Bluetooth & Wi-Fi') {
                   _showResetDialog(context);
                 } else {
                   print('$option tapped');
-                  // Potentially handle other options here
                 }
               },
               child: ListTile(

@@ -1,24 +1,24 @@
 // lib/phone_mockup/system_settings.dart
-
 import 'package:flutter/material.dart';
-import 'clickable_outline.dart'; // Added import
+import 'clickable_outline.dart';
 
-class SystemSettingsScreen extends StatefulWidget { // Changed
+class SystemSettingsScreen extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onNavigateToResetOptions;
+  final GlobalKey<ClickableOutlineState>? resetOptionsKey;
 
   const SystemSettingsScreen({
     super.key,
     required this.onBack,
     required this.onNavigateToResetOptions,
+    this.resetOptionsKey,
   });
 
   @override
-  State<SystemSettingsScreen> createState() => _SystemSettingsScreenState(); // Added
+  State<SystemSettingsScreen> createState() => SystemSettingsScreenState();
 }
 
-class _SystemSettingsScreenState extends State<SystemSettingsScreen> { // Added state class
-  // Data moved here
+class SystemSettingsScreenState extends State<SystemSettingsScreen> {
   final List<Map<String, dynamic>> _systemSettingsItems = [
     {
       'icon': Icons.language,
@@ -68,8 +68,17 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> { // Added 
   void initState() {
     super.initState();
     for (var item in _systemSettingsItems) {
-      _itemKeys[item['title'] as String] = GlobalKey<ClickableOutlineState>();
+      final title = item['title'] as String;
+      if (title == 'Reset options' && widget.resetOptionsKey != null) {
+          _itemKeys[title] = widget.resetOptionsKey!;
+      } else {
+        _itemKeys[title] = GlobalKey<ClickableOutlineState>();
+      }
     }
+  }
+
+  GlobalKey<ClickableOutlineState>? getResetOptionsKey() {
+      return _itemKeys['Reset options'];
   }
 
   @override
@@ -85,21 +94,19 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> { // Added 
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: widget.onBack, // Use widget.onBack
+          onPressed: widget.onBack,
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {
-              // Handle search action
-            },
+            onPressed: () {},
           ),
         ],
       ),
       body: Container(
         color: Colors.white,
         child: ListView.separated(
-          itemCount: _systemSettingsItems.length, // Use state variable
+          itemCount: _systemSettingsItems.length,
           separatorBuilder: (context, index) => const Divider(
             height: 1,
             indent: 20,
@@ -107,14 +114,14 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> { // Added 
             color: Colors.black12,
           ),
           itemBuilder: (context, index) {
-            final item = _systemSettingsItems[index]; // Use state variable
-            final itemKey = _itemKeys[item['title'] as String];
+            final item = _systemSettingsItems[index];
+            final itemKey = _itemKeys[item['title'] as String]!;
 
-            return ClickableOutline( // Wrap ListTile
-              key: itemKey!,
-              action: () async { // Define action
+            return ClickableOutline(
+              key: itemKey,
+              action: () async {
                 if (item['title'] == 'Reset options') {
-                  widget.onNavigateToResetOptions(); // Use widget.
+                  widget.onNavigateToResetOptions();
                 } else {
                   print('${item['title']} tapped');
                 }
@@ -141,7 +148,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> { // Added 
                     color: Colors.grey,
                   ),
                 ),
-                onTap: () { // Modify onTap
+                onTap: () {
                   itemKey.currentState?.triggerOutlineAndAction();
                 },
               ),

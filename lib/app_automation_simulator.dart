@@ -1,8 +1,9 @@
-// File: app_automation_simulator.dart
+// lib/app_automation_simulator.dart
 import 'dart:math'; // Import for Random
 import 'package:flutter/material.dart';
 import 'phone_mockup/phone_mockup_container.dart';
 import 'phone_mockup/app_grid.dart';
+import 'phone_mockup/settings_screen.dart';
 
 class AppAutomationSimulator {
   final Random _random = Random(); // Instance of Random for generating random numbers
@@ -14,143 +15,138 @@ class AppAutomationSimulator {
     required this.appGridKey,
   });
 
-  Future<bool> startClearDataSimulation(String appName) async {
-    print("Starting 'clear data' simulation for app: $appName");
+  /// A helper function to print the current step and add realistic delays.
+  Future<void> _handleStep(String message, Future<void> Function() action) async {
+    print(message);
+    // Add a random delay before performing the action to simulate human thinking time.
+    await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 300));
+    await action();
+    // Add a random delay after the action to simulate reaction time/animation.
+    await Future.delayed(Duration(milliseconds: _random.nextInt(501) + 500));
+  }
 
-    // Ensure we have access to the PhoneMockupContainerState
+
+  /// This is the main simulation method for the combined "clear data" and "reset network" flow.
+  Future<bool> startClearDataAndResetNetworkSimulation(String appName) async {
+    print("Starting expanded simulation for command: '$appName clear data'");
+
     final phoneMockupState = phoneMockupKey.currentState;
-    if (phoneMockupState == null) {
-      print("Error: PhoneMockupContainerState is null. Cannot proceed.");
-      return false;
-    }
-
-    // Step 1: Simulate scrolling/searching for app
-    // The extended scrolling/searching is now handled by scrollToApp
-    // print("Simulating scrolling/searching for $appName...");
-    // await Future.delayed(const Duration(seconds: 1)); // This delay is removed
-
     final appGridState = appGridKey.currentState;
-    if (appGridState == null) {
-      print("Error: AppGridState is null. Cannot proceed.");
+
+    if (phoneMockupState == null || appGridState == null) {
+      print("Error: PhoneMockupContainerState or AppGridState is null. Cannot proceed.");
       return false;
     }
 
-    await appGridState.scrollToApp(appName); // Ensure scrollToApp is awaited
-    print("App grid scrolling to $appName finished. Pausing briefly.");
-    await Future.delayed(const Duration(milliseconds: 300)); // Short pause after scrolling
+    // --- Part 1: Clear App Data ---
+    print("--- Starting Part 1: Clear App Data for $appName ---");
+
+    await _handleStep("Step 1.1: Scrolling to app '$appName'...", () async {
+      await appGridState.scrollToApp(appName);
+    });
 
     final appDetails = appGridState.getAppByName(appName);
     if (appDetails == null || appDetails.isEmpty) {
-      print("App '$appName' not found in grid after scrolling.");
+      print("Error: App '$appName' not found in grid.");
       return false;
     }
 
-    print("App '$appName' found: $appDetails");
-    await Future.delayed(const Duration(milliseconds: 500)); // Reduced delay
+    await _handleStep("Step 1.2: Long pressing on '$appName'...", () async {
+      final appOutlineKey = appGridState.getKeyForApp(appName);
+      await appOutlineKey?.currentState?.triggerOutlineAndAction();
+    });
 
-    // Step 2: Simulate long press on the app icon using ClickableOutline
-    print("Simulating long press on $appName via ClickableOutline.");
-    final appOutlineKey = appGridState.getKeyForApp(appName);
-    if (appOutlineKey == null) {
-      print("Error: Could not find ClickableOutline key for app $appName.");
-      return false;
-    }
-    if (appOutlineKey.currentState == null) {
-      print("Error: ClickableOutline key for $appName has no current state.");
-      return false;
-    }
-    await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await appOutlineKey.currentState!.triggerOutlineAndAction();
-    // The 5-second delay is now part of triggerOutlineAndAction.
-    // The action itself (handleAppLongPress) shows the dialog.
-    print("Long press action triggered for $appName. Waiting for dialog.");
-    await Future.delayed(const Duration(milliseconds: 700)); // Wait for dialog to build/appear after action.
+    await _handleStep("Step 1.3: Selecting 'App info'...", () async {
+      await phoneMockupState.triggerDialogAppInfoAction();
+    });
 
-    // Step 3: Simulate selecting "App info" in the dialog using ClickableOutline
-    print("Simulating selection of 'App info' in dialog via ClickableOutline.");
-    if (!phoneMockupState.mounted) {
-      print("Error: PhoneMockupContainerState is not mounted. Cannot trigger dialog action.");
-      return false;
-    }
-    await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerDialogAppInfoAction();
-    // triggerDialogAppInfoAction includes the outline delay and performs navigation.
-    print("'App info' action triggered. Waiting for navigation to App Info screen.");
-    await Future.delayed(const Duration(milliseconds: 300)); // Short delay for screen transition.
+    await _handleStep("Step 1.4: Waiting on App Info screen...", () async {
+       await Future.delayed(Duration(milliseconds: _random.nextInt(2001) + 1000));
+    });
 
-    // Step 4: Wait on App Info screen (user thinking time)
-    final dauertStep4 = _random.nextInt(3001) + 2000; // Random delay between 2000ms (2s) and 5000ms (5s)
-    print("Simulating user scrolling/reading on App Info screen for ${dauertStep4 / 1000} seconds.");
-    await Future.delayed(Duration(milliseconds: dauertStep4));
+    await _handleStep("Step 1.5: Tapping 'Storage & cache'...", () async {
+      await phoneMockupState.triggerAppInfoStorageCacheAction();
+    });
 
-    // Step 5: Click "Storage & cache" using ClickableOutline
-    print("Simulating click on 'Storage & cache' via ClickableOutline.");
-    if (!phoneMockupState.mounted) {
-      print("Error: PhoneMockupContainerState is not mounted. Cannot trigger 'Storage & cache' action.");
-      return false;
-    }
-    await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerAppInfoStorageCacheAction();
-    // triggerAppInfoStorageCacheAction includes outline delay and navigates to ClearDataScreen.
-    print("'Storage & cache' action triggered. Waiting for navigation to Clear Data screen.");
-    await Future.delayed(const Duration(milliseconds: 300)); // Short delay for screen transition.
+    await _handleStep("Step 1.6: Waiting on Storage screen...", () async {
+       await Future.delayed(Duration(milliseconds: _random.nextInt(2001) + 1000));
+    });
 
-    // Step 6: Wait on storage screen (user thinking time)
-    final dauertStep6 = _random.nextInt(3001) + 2000; // Random delay between 2000ms (2s) and 5000ms (5s)
-    print("Simulating user scrolling/reading on Storage & cache screen for ${dauertStep6 / 1000} seconds.");
-    await Future.delayed(Duration(milliseconds: dauertStep6));
+    await _handleStep("Step 1.7: Tapping 'Clear data'...", () async {
+      await phoneMockupState.triggerClearDataButtonAction();
+    });
 
-    // Step 7: Click "Clear Data" using ClickableOutline
-    print("Simulating click on 'Clear Data' via ClickableOutline.");
-    if (!phoneMockupState.mounted) {
-      print("Error: PhoneMockupContainerState is not mounted. Cannot trigger 'Clear Data' action.");
-      return false;
-    }
-    await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerClearDataButtonAction();
-    // triggerClearDataButtonAction includes outline delay and its action shows the confirmation dialog.
-    print("'Clear Data' action triggered. Waiting for confirmation dialog.");
-    await Future.delayed(const Duration(milliseconds: 700)); // Wait for dialog to build/appear.
+    await _handleStep("Step 1.8: Confirming 'Delete'...", () async {
+      await phoneMockupState.triggerDialogClearDataConfirmAction();
+    });
+    
+    print("--- Part 1 Complete: Data cleared for $appName. ---");
+    await Future.delayed(const Duration(seconds: 2));
 
-    // Step 8: Confirm "Delete" in Clear Data Dialog using ClickableOutline
-    print("Simulating click on 'Delete' in confirmation dialog via ClickableOutline.");
-    if (!phoneMockupState.mounted) {
-      print("Error: PhoneMockupContainerState is not mounted. Cannot trigger dialog 'Delete' action.");
-      return false;
-    }
-    await Future.delayed(Duration(milliseconds: _random.nextInt(401) + 100)); // 100ms to 500ms
-    await phoneMockupState.triggerDialogClearDataConfirmAction();
-    // triggerDialogClearDataConfirmAction includes outline delay and performs data clear + dialog dismissal.
-    print("'Delete' action triggered. Waiting for dialog dismissal and data clear operation.");
-    await Future.delayed(const Duration(milliseconds: 500)); // Short delay for action to complete.
+    // --- Part 2: Reset Mobile Network Settings ---
+    // Pass the already validated state objects to the next part of the simulation.
+    await startResetNetworkSimulation(phoneMockupState, appGridState);
 
-    // New delay: Wait for 9-10 seconds after data clear confirmation
-    final postClearDelayMillis = _random.nextInt(1001) + 9000; // 9000ms to 10000ms
-    print("Data cleared. Pausing for ${postClearDelayMillis / 1000} seconds on the current screen (likely App Info or where Clear Data dialog was shown).");
-    await Future.delayed(Duration(milliseconds: postClearDelayMillis));
+    return true;
+  }
 
-    // Step 9: Return home
-    print("Simulation actions complete. Returning to home screen.");
-    await Future.delayed(const Duration(seconds: 1)); // User pause before final navigation.
-    if (phoneMockupState.mounted) {
+  /// New simulation method specifically for resetting network settings.
+  /// It now accepts the state objects as parameters to avoid re-fetching them.
+  Future<bool> startResetNetworkSimulation(PhoneMockupContainerState phoneMockupState, AppGridState appGridState) async {
+    print("--- Starting Part 2: Reset Mobile Network Settings ---");
+    // No need to fetch or check for nulls here, as we are receiving the state directly.
+
+    await _handleStep("Step 2.1: Navigating to Home Screen...", () async {
+        phoneMockupState.navigateHome();
+    });
+
+    await _handleStep("Step 2.2: Tapping 'Settings' app...", () async {
+       final settingsAppDetails = appGridState.getAppByName('Settings');
+       if (settingsAppDetails != null) {
+         phoneMockupState.handleItemTap('Settings', itemDetails: settingsAppDetails);
+       } else {
+         print("Error: Could not find 'Settings' app details.");
+         throw Exception("Settings app not found");
+       }
+    });
+    
+    await _handleStep("Step 2.3: Scrolling to bottom of Settings...", () async {
+      await phoneMockupState.triggerSettingsScrollToEnd();
+    });
+    
+    await _handleStep("Step 2.4: Waiting for 5 seconds...", () async {
+      await Future.delayed(const Duration(seconds: 5));
+    });
+
+    await _handleStep("Step 2.5: Tapping 'System' in Settings...", () async {
+       await phoneMockupState.triggerSystemSettingsAction();
+    });
+
+    await _handleStep("Step 2.6: Tapping 'Reset options'...", () async {
+        await phoneMockupState.triggerResetOptionsAction();
+    });
+
+    await _handleStep("Step 2.7: Tapping 'Reset Mobile Network Settings'...", () async {
+        await phoneMockupState.triggerResetMobileNetworkAction();
+    });
+
+    await _handleStep("Step 2.8: Tapping 'Reset settings' (first confirmation)...", () async {
+        await phoneMockupState.triggerConfirmResetMobileNetworkAction();
+    });
+    
+    await _handleStep("Step 2.9: Tapping 'Reset settings' (second confirmation)...", () async {
+        await phoneMockupState.triggerConfirmResetMobileNetworkAction();
+    });
+
+    print("--- Part 2 Complete: Mobile network settings reset. ---");
+    await Future.delayed(const Duration(seconds: 3)); // Wait for toast to disappear.
+
+    // --- Finalization ---
+    await _handleStep("Step 3: Returning to Home Screen...", () async {
       phoneMockupState.navigateHome();
-      print("Returned to home screen."); // Changed print statement
-
-      // Perform slow random scroll on the app grid
-      if (appGridState.mounted) {
-        final int slowScrollTotalSeconds = _random.nextInt(9) + 7; // 7 to 15 seconds
-        print("Now performing slow random scroll on app grid for $slowScrollTotalSeconds seconds.");
-        await appGridState.performSlowRandomScroll(Duration(seconds: slowScrollTotalSeconds));
-        print("Slow random scroll on app grid finished.");
-      } else {
-        print("Error: AppGridState not available for slow random scroll after returning home.");
-      }
-      
-      print("All simulation actions, including post-clear scrolling, are complete."); // Final adjusted print
-    } else {
-      print("Error: PhoneMockupContainerState is not mounted. Cannot return home or perform post-scroll.");
-      return false;
-    }
+    });
+    
+    print("All simulation actions complete.");
 
     return true;
   }

@@ -4,13 +4,13 @@ import 'dart:io' show File;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui'; // For BackdropFilter
-import 'dart:async'; // For Timer (used in showInternalToast Future.delayed)
+import 'dart:async'; // For Timer
 
 import 'app_grid.dart';
 import 'settings_screen.dart';
-import 'system_settings.dart'; // Added import
-import 'reset_option.dart'; // Added import
-import 'reset_mobile_network_settings_screen.dart'; // Import screen
+import 'system_settings.dart';
+import 'reset_option.dart';
+import 'reset_mobile_network_settings_screen.dart';
 import 'notification_drawer.dart';
 import 'custom_app_action_dialog.dart';
 import 'app_info_screen.dart';
@@ -21,7 +21,7 @@ import 'connection_sharing_screen.dart';
 import 'internal_toast.dart';
 import 'apps1.dart';
 import 'app_management_screen.dart';
-import 'system_app_screen.dart'; // Import the system apps screen
+import 'system_app_screen.dart';
 
 // Enum to manage the current view being displayed in the phone mockup
 enum CurrentScreenView {
@@ -32,10 +32,10 @@ enum CurrentScreenView {
   connectionSharing,
   apps1,
   appManagement,
-  systemApps, // Add new screen view
-  systemSettings, // Added for system settings screen
-  resetOptions,   // New
-  resetMobileNetworkSettings, // New value
+  systemApps,
+  systemSettings,
+  resetOptions,
+  resetMobileNetworkSettings,
 }
 
 typedef AppItemTapCallback = void Function(String itemName,
@@ -43,16 +43,15 @@ typedef AppItemTapCallback = void Function(String itemName,
 
 class PhoneMockupContainer extends StatefulWidget {
   final GlobalKey<AppGridState>
-      appGridKey; // Key for the AppGrid it will contain
-  final File? mockupWallpaperImage; // Added mockup wallpaper image
+      appGridKey;
+  final File? mockupWallpaperImage;
 
   const PhoneMockupContainer({
-    super.key, // This is the key for PhoneMockupContainer itself
+    super.key,
     required this.appGridKey,
-    this.mockupWallpaperImage, // Added new parameter
+    this.mockupWallpaperImage,
   });
 
-  // Static key and method - assuming these are intended to remain, cleaned from markers.
   static final GlobalKey<PhoneMockupContainerState> globalKey =
       GlobalKey<PhoneMockupContainerState>();
 
@@ -70,19 +69,18 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
 
   CurrentScreenView _currentScreenView = CurrentScreenView.appGrid;
   Map<String, String>?
-      _currentAppDetails; // To store details of the app being interacted with
+      _currentAppDetails;
   Widget _currentAppScreenWidget =
-      const SizedBox(); // Holds the actual widget to display
+      const SizedBox();
 
   bool _isBlurred = false;
   Widget? _activeDialog;
 
-  // --- Toast State Variables ---
   String? _currentToastMessage;
   bool _isToastVisible = false;
   Duration _toastDuration = const Duration(seconds: 3);
 
-  // --- AppInfoScreen Keys ---
+  // --- Keys for automation ---
   final GlobalKey<ClickableOutlineState> _appInfoBackButtonKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _appInfoOpenButtonKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _appInfoStorageCacheButtonKey =
@@ -94,27 +92,19 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   final GlobalKey<ClickableOutlineState> _appInfoOpenByDefaultKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _appInfoUninstallButtonKey =
       GlobalKey();
-
-  // --- ClearDataScreen Keys ---
   final GlobalKey<ClickableOutlineState> _clearDataBackButtonKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _clearDataClearDataButtonKey =
       GlobalKey();
   final GlobalKey<ClickableOutlineState> _clearDataClearCacheButtonKey =
       GlobalKey();
-
-  // --- CustomAppActionDialog Keys ---
   final GlobalKey<ClickableOutlineState> _appActionDialogAppInfoKey =
       GlobalKey();
   final GlobalKey<ClickableOutlineState> _appActionDialogUninstallKey =
       GlobalKey();
-
-  // --- CustomClearDataDialog Keys ---
   final GlobalKey<ClickableOutlineState> _clearDataDialogCancelKey =
       GlobalKey();
   final GlobalKey<ClickableOutlineState> _clearDataDialogConfirmKey =
       GlobalKey();
-
-  // --- Apps1Screen Keys ---
   final GlobalKey<ClickableOutlineState> _apps1BackButtonKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _appManagementKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _defaultAppsKey = GlobalKey();
@@ -124,6 +114,13 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   final GlobalKey<ClickableOutlineState> _specialAppAccessKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _appLockKey = GlobalKey();
   final GlobalKey<ClickableOutlineState> _dualAppsKey = GlobalKey();
+  
+  // --- New Keys for Settings & Reset Flow ---
+  final GlobalKey<SettingsScreenState> _settingsScreenKey = GlobalKey<SettingsScreenState>();
+  final GlobalKey<ClickableOutlineState> _systemSettingsResetOptionsKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _resetOptionsMobileNetworkKey = GlobalKey();
+  final GlobalKey<ClickableOutlineState> _resetMobileNetworkSettingsButtonKey = GlobalKey();
+
 
   void dismissDialog() {
     setState(() {
@@ -140,7 +137,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     });
   }
 
-  // Method to show the system apps screen
   void showSystemAppsScreen() {
     setState(() {
       _currentScreenView = CurrentScreenView.systemApps;
@@ -175,7 +171,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
   @override
   void initState() {
     super.initState();
-    _updateCurrentScreenWidget(); // Initialize with AppGrid
+    _updateCurrentScreenWidget();
   }
 
   void handleItemTap(String itemName, {Map<String, String>? itemDetails}) {
@@ -197,7 +193,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           _currentScreenView = CurrentScreenView.connectionSharing;
           _updateCurrentScreenWidget();
         });
-      } else if (itemName == 'System') { // New condition for System
+      } else if (itemName == 'System') {
         setState(() {
           _currentScreenView = CurrentScreenView.systemSettings;
           _updateCurrentScreenWidget();
@@ -246,6 +242,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
         break;
       case CurrentScreenView.settings:
         _currentAppScreenWidget = SettingsScreen(
+          key: _settingsScreenKey,
           onBack: () => navigateHome(),
           onSettingItemTap: handleItemTap,
         );
@@ -350,7 +347,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
             },
             onNavigateToSystemApps: showSystemAppsScreen, onAppSelected: (Map<String, String> app) => navigateToAppInfo(appDetails: app),);
         break;
-      // Case for the new system apps screen
       case CurrentScreenView.systemApps:
         _currentAppScreenWidget = SystemAppScreen(
           onBack: () {
@@ -361,7 +357,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           }, onAppSelected: (Map<String, String> app) => navigateToAppInfo(appDetails: app),
         );
         break;
-      case CurrentScreenView.systemSettings: // New case for SystemSettingsScreen
+      case CurrentScreenView.systemSettings:
         _currentAppScreenWidget = SystemSettingsScreen(
           onBack: () {
             setState(() {
@@ -369,19 +365,20 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
-          onNavigateToResetOptions: () { // Actual navigation
+          onNavigateToResetOptions: () {
             setState(() {
               _currentScreenView = CurrentScreenView.resetOptions;
               _updateCurrentScreenWidget();
             });
           },
+          resetOptionsKey: _systemSettingsResetOptionsKey,
         );
         break;
-      case CurrentScreenView.resetOptions: // New case for ResetOptionScreen
+      case CurrentScreenView.resetOptions:
         _currentAppScreenWidget = ResetOptionScreen(
           onBack: () {
             setState(() {
-              _currentScreenView = CurrentScreenView.systemSettings; // Back to System Settings
+              _currentScreenView = CurrentScreenView.systemSettings;
               _updateCurrentScreenWidget();
             });
           },
@@ -391,20 +388,22 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
               _updateCurrentScreenWidget();
             });
           },
-          showMockupDialog: _showDialog, // Pass the _showDialog method
-          showMockupToast: showInternalToast, // Pass the showInternalToast method
-          dismissMockupDialog: dismissDialog, // Pass the dismissDialog method
+          showMockupDialog: _showDialog,
+          showMockupToast: showInternalToast,
+          dismissMockupDialog: dismissDialog,
+          resetMobileNetworkKey: _resetOptionsMobileNetworkKey,
         );
         break;
-      case CurrentScreenView.resetMobileNetworkSettings: // New case
+      case CurrentScreenView.resetMobileNetworkSettings:
         _currentAppScreenWidget = ResetMobileNetworkSettingsScreen(
           onBack: () {
             setState(() {
-              _currentScreenView = CurrentScreenView.resetOptions; // Navigate back to ResetOptionScreen
+              _currentScreenView = CurrentScreenView.resetOptions;
               _updateCurrentScreenWidget();
             });
           },
           showInternalToast: showInternalToast,
+          resetButtonKey: _resetMobileNetworkSettingsButtonKey,
         );
         break;
     }
@@ -427,13 +426,13 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       final appName = cmd.substring('tap '.length).trim();
       _handleAppTap(appName);
     } else if (cmd.contains('back')) {
-      // Prioritize programmatic back if available for the current screen
       if (_currentScreenView == CurrentScreenView.appInfo) {
         await triggerAppInfoBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.clearData) {
         await triggerClearDataBackButtonAction();
       } else if (_currentScreenView == CurrentScreenView.connectionSharing ||
-          _currentScreenView == CurrentScreenView.apps1) {
+          _currentScreenView == CurrentScreenView.apps1 ||
+          _currentScreenView == CurrentScreenView.systemSettings) { // Added system settings
         setState(() {
           _currentScreenView = CurrentScreenView.settings;
           _updateCurrentScreenWidget();
@@ -448,6 +447,16 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
           _currentScreenView = CurrentScreenView.appManagement;
           _updateCurrentScreenWidget();
         });
+       } else if (_currentScreenView == CurrentScreenView.resetOptions) {
+          setState(() {
+            _currentScreenView = CurrentScreenView.systemSettings;
+            _updateCurrentScreenWidget();
+          });
+        } else if (_currentScreenView == CurrentScreenView.resetMobileNetworkSettings) {
+          setState(() {
+            _currentScreenView = CurrentScreenView.resetOptions;
+            _updateCurrentScreenWidget();
+          });
       } else if (_currentScreenView == CurrentScreenView.settings) {
         navigateHome();
       } else {
@@ -613,12 +622,32 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       await _clearDataDialogConfirmKey.currentState?.triggerOutlineAndAction();
   Future<void> triggerDialogClearDataCancelAction() async =>
       await _clearDataDialogCancelKey.currentState?.triggerOutlineAndAction();
+      
+  Future<void> triggerSystemSettingsAction() async {
+    final settingsState = _settingsScreenKey.currentState;
+    if (settingsState != null) {
+        final systemItemKey = settingsState.getSettingItemKey('System');
+        await systemItemKey?.currentState?.triggerOutlineAndAction();
+    } else {
+        print("Error: SettingsScreen state not found.");
+    }
+  }
+
+  Future<void> triggerResetOptionsAction() async =>
+      await _systemSettingsResetOptionsKey.currentState?.triggerOutlineAndAction();
+  
+  Future<void> triggerResetMobileNetworkAction() async =>
+      await _resetOptionsMobileNetworkKey.currentState?.triggerOutlineAndAction();
+
+  Future<void> triggerConfirmResetMobileNetworkAction() async =>
+      await _resetMobileNetworkSettingsButtonKey.currentState?.triggerOutlineAndAction();
+
 
   void simulateClearDataClick() {
     if (_currentAppDetails != null) {
       final String appName = _currentAppDetails!['name']!;
       _showDialog(
-        context, // Pass context here
+        context,
         CustomClearDataDialog(
           title: 'Clear app data?',
           content:
@@ -662,8 +691,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
     _drawerKey.currentState?.openDrawer();
   }
 
-  // Modified to accept BuildContext, though not directly used by this implementation
-  // This is to match the required signature for the callback.
   void _showDialog(BuildContext context, Widget dialogContent) {
     setState(() {
       _activeDialog = dialogContent;
@@ -737,7 +764,7 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
                     child: Center(
                       child: GestureDetector(
                         onTap:
-                            () {}, // To prevent inner taps from closing the dialog
+                            () {},
                         child: _activeDialog!,
                       ),
                     ),
@@ -798,4 +825,6 @@ class PhoneMockupContainerState extends State<PhoneMockupContainer> {
       ),
     );
   }
+
+  Future<void> triggerSettingsScrollToEnd() async {}
 }
