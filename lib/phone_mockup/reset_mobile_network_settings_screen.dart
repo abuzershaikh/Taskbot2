@@ -1,5 +1,6 @@
 // lib/phone_mockup/reset_mobile_network_settings_screen.dart
 import 'package:flutter/material.dart';
+import 'clickable_outline.dart'; // Added import
 
 class ResetMobileNetworkSettingsScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -19,6 +20,7 @@ class ResetMobileNetworkSettingsScreen extends StatefulWidget {
 class _ResetMobileNetworkSettingsScreenState
     extends State<ResetMobileNetworkSettingsScreen> {
   bool _isConfirmationStep = false;
+  final GlobalKey<ClickableOutlineState> _buttonKey = GlobalKey<ClickableOutlineState>(); // Added key
 
   void _handleReset() {
     if (!_isConfirmationStep) {
@@ -90,26 +92,34 @@ class _ResetMobileNetworkSettingsScreenState
 
             const SizedBox(height: 32),
             Center(
-              child: ElevatedButton(
-                onPressed: _handleReset,
-                style: ElevatedButton.styleFrom(
-                  // Change button color for confirmation step to match screenshot
-                  backgroundColor: _isConfirmationStep
-                      ? Colors.amber[300]
-                      : Colors.deepPurple[50],
-                  foregroundColor: _isConfirmationStep
-                      ? Colors.black87
-                      : Colors.deepPurple[700],
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+              child: ClickableOutline( // Wrap ElevatedButton
+                key: _buttonKey,
+                action: () async {
+                  _handleReset(); // Call the existing handler
+                },
+                child: ElevatedButton(
+                  onPressed: () { // Modified onPressed
+                    _buttonKey.currentState?.triggerOutlineAndAction();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    // Change button color for confirmation step to match screenshot
+                    backgroundColor: _isConfirmationStep
+                        ? Colors.amber[300]
+                        : Colors.deepPurple[50],
+                    foregroundColor: _isConfirmationStep
+                        ? Colors.black87
+                        : Colors.deepPurple[700],
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-                child: const Text(
-                  'Reset settings',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  child: const Text(
+                    'Reset settings',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),

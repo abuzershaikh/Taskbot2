@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'clickable_outline.dart'; // Import ClickableOutline
 
-class ResetOptionScreen extends StatelessWidget {
+class ResetOptionScreen extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onNavigateToResetMobileNetwork;
   final void Function(BuildContext, Widget) showMockupDialog;
@@ -16,9 +17,33 @@ class ResetOptionScreen extends StatelessWidget {
     required this.dismissMockupDialog,
   });
 
+  @override
+  State<ResetOptionScreen> createState() => _ResetOptionScreenState();
+}
+
+class _ResetOptionScreenState extends State<ResetOptionScreen> {
+  final List<String> resetOptions = [
+    'Reset Mobile Network Settings',
+    'Reset Bluetooth & Wi-Fi',
+    'Reset app preferences',
+    'Erase all data (factory reset)',
+  ];
+
+  // Map to hold GlobalKeys for each option
+  late Map<String, GlobalKey<ClickableOutlineState>> _optionKeys;
+
+  @override
+  void initState() {
+    super.initState();
+    _optionKeys = {
+      for (var option in resetOptions)
+        option: GlobalKey<ClickableOutlineState>()
+    };
+  }
+
   // Function to show the reset dialog
   void _showResetDialog(BuildContext context) {
-    showMockupDialog(
+    widget.showMockupDialog(
       context,
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -35,7 +60,7 @@ class ResetOptionScreen extends StatelessWidget {
                 style: TextStyle(color: Theme.of(context).primaryColor),
               ),
               onPressed: () {
-                dismissMockupDialog(); // Dismiss the dialog
+                widget.dismissMockupDialog(); // Dismiss the dialog
               },
             );
           }),
@@ -46,9 +71,9 @@ class ResetOptionScreen extends StatelessWidget {
                 style: TextStyle(color: Theme.of(context).primaryColor),
               ),
               onPressed: () {
-                dismissMockupDialog(); // Dismiss the dialog
+                widget.dismissMockupDialog(); // Dismiss the dialog
                 // Show a toast (SnackBar) message
-                showMockupToast('Wi-Fi & Bluetooth settings have been reset.');
+                widget.showMockupToast('Wi-Fi & Bluetooth settings have been reset.');
                 print('Resetting Bluetooth & Wi-Fi settings...');
                 // Add actual reset logic here if needed
               },
@@ -61,13 +86,6 @@ class ResetOptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> resetOptions = [
-      'Reset Mobile Network Settings',
-      'Reset Bluetooth & Wi-Fi',
-      'Reset app preferences',
-      'Erase all data (factory reset)',
-    ];
-
     return Scaffold(
       backgroundColor: Colors.blueGrey[50],
       appBar: AppBar(
@@ -79,7 +97,7 @@ class ResetOptionScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: onBack,
+          onPressed: widget.onBack,
         ),
         actions: [
           IconButton(
@@ -102,27 +120,34 @@ class ResetOptionScreen extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final option = resetOptions[index];
-            return ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-              title: Text(
-                option,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              onTap: () {
+            final itemKey = _optionKeys[option];
+
+            return ClickableOutline(
+              key: itemKey!,
+              action: () async { // Ensure action is async
                 if (option == 'Reset Mobile Network Settings') {
-                  onNavigateToResetMobileNetwork();
+                  widget.onNavigateToResetMobileNetwork();
                 } else if (option == 'Reset Bluetooth & Wi-Fi') {
-                  // Show the dialog for this option
                   _showResetDialog(context);
                 } else {
                   print('$option tapped');
                   // Potentially handle other options here
                 }
               },
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 24.0, vertical: 12.0),
+                title: Text(
+                  option,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                onTap: () {
+                  itemKey.currentState?.triggerOutlineAndAction();
+                },
+              ),
             );
           },
         ),

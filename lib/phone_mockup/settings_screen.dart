@@ -174,17 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           )
                         : const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                     onTap: () {
-                      if (widget.onSettingItemTap != null) { // Removed direct navigation for 'System'
-                        Map<String, String> stringItemDetails = {};
-                        item.forEach((key, value) {
-                          if (key != 'icon') {
-                            stringItemDetails[key] = value.toString();
-                          }
-                        });
-                        widget.onSettingItemTap!(itemTitle, itemDetails: stringItemDetails);
-                      } else {
-                        print('Tap action not configured for $itemTitle');
-                      }
+                      itemKey?.currentState?.triggerOutlineAndAction();
                     },
                   ),
                 ),
