@@ -44,6 +44,21 @@ class ClickableOutlineState extends State<ClickableOutline> {
     }
   }
 
+  Future<void> triggerOutlineAndExecute(
+    Future<void> Function() specificAction, {
+    Duration outlineDuration = const Duration(seconds: 2),
+  }) async {
+    if (!_isStateMounted) return;
+
+    _showOutline();
+    await Future.delayed(outlineDuration);
+
+    if (_isStateMounted) {
+      _removeOutline();
+      await specificAction();
+    }
+  }
+
   void _showOutline() {
     // Ensure previous outline is removed if any
     _removeOutline();

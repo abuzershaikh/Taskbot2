@@ -100,15 +100,32 @@ class AppAutomationSimulator {
         phoneMockupState.navigateHome();
     });
 
-    await _handleStep("Step 2.2: Tapping 'Settings' app...", () async {
-       final settingsAppDetails = appGridState.getAppByName('Settings');
-       if (settingsAppDetails != null) {
-         phoneMockupState.handleItemTap('Settings', itemDetails: settingsAppDetails);
-       } else {
-         print("Error: Could not find 'Settings' app details.");
-         throw Exception("Settings app not found");
-       }
-    });
+   await _handleStep("Step 2.2: Scrolling to and tapping 'Settings' app with outline...", () async {
+  // Step 2.2.1: Scroll to Settings
+  await appGridKey.currentState?.scrollToApp('Settings');
+
+  // Small delay to let scroll animation complete
+  await Future.delayed(Duration(milliseconds: _random.nextInt(1001) + 500));
+
+  // Step 2.2.2: Get the key and tap
+  final settingsAppKey = appGridKey.currentState?.getKeyForApp('Settings');
+  final settingsAppDetails = appGridKey.currentState?.getAppByName('Settings');
+
+  if (settingsAppKey == null || settingsAppDetails == null) {
+    print("Error: Could not find key or details for 'Settings' app. Aborting action.");
+    throw Exception("Settings app not found in grid");
+  }
+
+  Future<void> settingsTapAction() async {
+    phoneMockupState.handleItemTap('Settings', itemDetails: settingsAppDetails);
+  }
+
+  await settingsAppKey.currentState?.triggerOutlineAndExecute(
+    settingsTapAction,
+    outlineDuration: const Duration(seconds: 2),
+  );
+});
+
     
     await _handleStep("Step 2.3: Scrolling to bottom of Settings...", () async {
       await phoneMockupState.triggerSettingsScrollToEnd();
